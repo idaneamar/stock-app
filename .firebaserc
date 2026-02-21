@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "stockapp-gpt",
+    "prod": "stockapp-gpt"
+  },
+  "targets": {},
+  "etags": {}
+}
