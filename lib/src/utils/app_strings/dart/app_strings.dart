@@ -28,6 +28,9 @@ abstract class AppStrings {
   static const String deleteAllScans = 'Delete All Scans';
   static const String tapToScanStocks =
       'Tap the scan button to start stock scanning';
+  /// Shown when scan history is empty; run scan is only from Strategies.
+  static const String runScanFromStrategies =
+      'Run a scan from the Strategies menu (left drawer)';
   static const String scanPrefix = 'Scan #';
   static const String stocksFound = 'stocks found';
   static const String scanning = 'Scanning:';

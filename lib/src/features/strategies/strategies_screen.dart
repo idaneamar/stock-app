@@ -4,10 +4,10 @@ import 'package:stock_app/src/features/strategies/strategies_controller.dart';
 import 'package:stock_app/src/features/strategies/strategy_editor_dialog.dart';
 import 'package:stock_app/src/features/strategies/widgets/strategies_error_state.dart';
 import 'package:stock_app/src/features/strategies/widgets/strategy_card.dart';
-import 'package:stock_app/src/features/strategies/program_create_screen.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
+import 'package:stock_app/src/utils/route/app_router.dart';
 import 'package:stock_app/src/utils/handlers/ui_feedback.dart';
 
 class StrategiesScreen extends StatefulWidget {
@@ -288,9 +288,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
               const SizedBox(width: UIConstants.spacingM),
               OutlinedButton.icon(
                 onPressed: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProgramCreateScreen()),
-                  );
+                  await Get.toNamed(Routes.createProgram);
                   controller.fetchPrograms();
                 },
                 icon: const Icon(Icons.add),

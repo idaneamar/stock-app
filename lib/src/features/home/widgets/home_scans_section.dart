@@ -83,7 +83,7 @@ class _ScansList extends StatelessWidget {
       }
       if (controller.scanHistory.isEmpty) {
         return const EmptyStateWidget(
-          title: AppStrings.tapToScanStocks,
+          title: AppStrings.runScanFromStrategies,
         );
       }
       return RefreshIndicator(
