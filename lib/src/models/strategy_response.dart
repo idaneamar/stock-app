@@ -79,15 +79,14 @@ class StrategyItem {
     );
   }
 
+  /// Serializes for client use. Does not include ignore_vix (VIX is global in Settings).
   Map<String, dynamic> toJson() {
-    final out = <String, dynamic>{
+    return <String, dynamic>{
       'id': id,
       'name': name,
       'enabled': enabled,
       'config': config,
-      'ignore_vix': ignoreVix,
     };
-    return out;
   }
 }
 
