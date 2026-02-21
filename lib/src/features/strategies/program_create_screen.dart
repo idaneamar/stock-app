@@ -19,7 +19,6 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
   final StrategiesController controller = Get.find<StrategiesController>();
   final ApiService _api = ApiService();
   final TextEditingController _nameController = TextEditingController();
-  bool _ignoreVix = false;
   bool _isSaving = false;
   String? _errorMessage;
 
@@ -46,7 +45,6 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
     try {
       final response = await _api.createProgram({
         'name': name,
-        'ignore_vix': _ignoreVix,
       });
       if (response.statusCode == 201 || response.statusCode == 200) {
         await controller.fetchPrograms();
@@ -103,17 +101,6 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
               AppTextField(
                 label: AppStrings.programName,
                 controller: _nameController,
-              ),
-              const SizedBox(height: UIConstants.spacingL),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(AppStrings.useVixFilter),
-                subtitle: Text(
-                  AppStrings.useVixFilterHint,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                ),
-                value: !_ignoreVix,
-                onChanged: _isSaving ? null : (v) => setState(() => _ignoreVix = !v),
               ),
               const SizedBox(height: UIConstants.spacingXXXL),
               ElevatedButton(

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:stock_app/src/features/home/home_controller.dart';
 import 'package:stock_app/src/models/strategy_response.dart';
 import 'package:stock_app/src/utils/services/api_service.dart';
+import 'package:stock_app/src/utils/services/shared_prefs_service.dart';
 
 class StrategiesController extends GetxController {
   final ApiService _api = ApiService();
@@ -26,17 +27,27 @@ class StrategiesController extends GetxController {
             .map((e) => Map<String, dynamic>.from(e))
             .toList(),
       );
-      final active = (data['active_program'] as Map?) ?? {};
-      final activeId = active['active_program_id'];
-      if (activeId is String && activeId.isNotEmpty && selectedProgramId.value.isEmpty) {
-        selectedProgramId.value = activeId;
-      } else if (programs.isNotEmpty && selectedProgramId.value.isEmpty) {
-        final firstId = (programs.first['program_id'] ?? '').toString();
-        if (firstId.isNotEmpty) selectedProgramId.value = firstId;
+      final savedActiveId = await SharedPrefsService.getActiveProgramId();
+      if (savedActiveId.isNotEmpty) {
+        selectedProgramId.value = savedActiveId;
+      } else {
+        final active = (data['active_program'] as Map?) ?? {};
+        final activeId = active['active_program_id'];
+        if (activeId is String && activeId.isNotEmpty) {
+          selectedProgramId.value = activeId;
+        } else if (programs.isNotEmpty) {
+          final firstId = (programs.first['program_id'] ?? '').toString();
+          if (firstId.isNotEmpty) selectedProgramId.value = firstId;
+        }
       }
     } catch (e) {
       log('Failed to load programs: $e');
     }
+  }
+
+  void setActiveProgram(String programId) {
+    selectedProgramId.value = programId;
+    SharedPrefsService.setActiveProgramId(programId);
   }
 
   Future<void> fetchStrategies({bool enabledOnly = false}) async {
@@ -128,19 +139,12 @@ class StrategiesController extends GetxController {
   static const double _defaultAdxMin = 30;
   static const double _defaultDailyLossLimit = 0.02;
 
-  /// Run a scan with the selected program. Uses program's ignore_vix and program_id.
+  /// Run a scan with the selected program. Uses global VIX setting (Settings).
   Future<bool> runScan() async {
     final programId = selectedProgramId.value;
     if (programId.isEmpty) return false;
 
-    Map<String, dynamic>? program;
-    for (final p in programs) {
-      if ((p['program_id'] ?? '').toString() == programId) {
-        program = p;
-        break;
-      }
-    }
-    final ignoreVix = program != null && (program['ignore_vix'] == true);
+    final ignoreVix = !(await SharedPrefsService.getUseVixFilter());
 
     try {
       isRunningScan.value = true;

@@ -232,7 +232,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                     )
                     .toList(),
                 onChanged: (v) {
-                  if (v != null) controller.selectedProgramId.value = v;
+                  if (v != null) controller.setActiveProgram(v);
                 },
               );
             },

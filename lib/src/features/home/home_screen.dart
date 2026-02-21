@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:stock_app/src/features/home/home_controller.dart';
 import 'package:stock_app/src/features/home/widgets/home_app_bar.dart';
 import 'package:stock_app/src/features/home/widgets/home_scans_section.dart';
+import 'package:stock_app/src/features/home/widgets/scan_filters_dialog_content.dart';
 import 'package:stock_app/src/features/stock_list/stock_list_screen.dart';
 import 'package:stock_app/src/models/scan_history_response.dart';
 import 'package:stock_app/src/utils/app_dialog.dart';
@@ -61,6 +62,40 @@ class _HomeScreenState extends State<HomeScreen> {
           onOpenScan: (id) => Get.to(() => ScanAnalysisScreen(scanId: id)),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openScanDialog(context),
+        backgroundColor: AppColors.blue,
+        foregroundColor: AppColors.white,
+        icon: const Icon(Icons.search),
+        label: const Text(AppStrings.scanStocks),
+      ),
+    );
+  }
+
+  void _openScanDialog(BuildContext context) {
+    controller.refreshPrograms();
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(AppStrings.stockFilters),
+          content: ScanFiltersDialogContent(controller: controller),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(AppStrings.cancel),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await controller.fetchStocks();
+              },
+              child: const Text(AppStrings.runScan),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/utils/services/api_service.dart';
 import 'package:stock_app/src/models/stock_scan_response.dart';
@@ -15,6 +16,24 @@ class HomeController extends GetxController {
     permanent: true,
   );
 
+  // Scan dialog parameters (no VIX here; global VIX is in Settings)
+  final minMarketCapCtrl = TextEditingController(text: '120');
+  final maxMarketCapCtrl = TextEditingController(text: '1500');
+  final minAvgVolumeCtrl = TextEditingController(text: '15000');
+  final minAvgTransactionValueCtrl = TextEditingController(text: '150000');
+  final minVolatilityCtrl = TextEditingController(text: '0.4');
+  final minPriceCtrl = TextEditingController(text: '2');
+  final topNStocksCtrl = TextEditingController(text: '500');
+  final RxList<Map<String, dynamic>> programs = <Map<String, dynamic>>[].obs;
+  final RxString selectedProgramId = ''.obs;
+  final RxBool strictRules = true.obs;
+  final RxBool volumeSpikeRequired = true.obs;
+  final RxBool allowIntradayPrices = false.obs;
+  final adxMinCtrl = TextEditingController(text: '30');
+  final dailyLossLimitCtrl = TextEditingController(text: '0.02');
+
+  var isLoading = false.obs;
+  var errorMessage = ''.obs;
   var scanResponse = Rxn<StockScanResponse>();
   var scanHistory = <ScanHistoryData>[].obs;
   var scanProgress = <String, int>{}.obs;
@@ -38,6 +57,54 @@ class HomeController extends GetxController {
     super.onInit();
     _initializeWebSocket();
     _loadSavedDataAsync();
+    _loadPrograms();
+  }
+
+  @override
+  void onClose() {
+    minMarketCapCtrl.dispose();
+    maxMarketCapCtrl.dispose();
+    minAvgVolumeCtrl.dispose();
+    minAvgTransactionValueCtrl.dispose();
+    minVolatilityCtrl.dispose();
+    minPriceCtrl.dispose();
+    topNStocksCtrl.dispose();
+    adxMinCtrl.dispose();
+    dailyLossLimitCtrl.dispose();
+    super.onClose();
+  }
+
+  Future<void> _loadPrograms() async {
+    try {
+      final response = await _apiService.getPrograms();
+      final data = (response.data ?? {})['data'] ?? {};
+      final items = (data['items'] as List?) ?? [];
+      programs.assignAll(
+        items
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(),
+      );
+      final savedId = await SharedPrefsService.getActiveProgramId();
+      if (savedId.isNotEmpty) {
+        selectedProgramId.value = savedId;
+      } else {
+        final active = (data['active_program'] as Map?) ?? {};
+        final activeId = active['active_program_id'];
+        if (activeId is String && activeId.isNotEmpty) {
+          selectedProgramId.value = activeId;
+        } else if (programs.isNotEmpty) {
+          final firstId = (programs.first['program_id'] ?? '').toString();
+          if (firstId.isNotEmpty) selectedProgramId.value = firstId;
+        }
+      }
+    } catch (e) {
+      log('Failed to load programs: $e');
+    }
+  }
+
+  Future<void> refreshPrograms() async {
+    await _loadPrograms();
   }
 
   void _initializeWebSocket() {
@@ -151,6 +218,49 @@ class HomeController extends GetxController {
         isInitialLoading.value = false;
       }
     });
+  }
+
+  /// Run scan using dialog params, global VIX (Settings), and active program id.
+  Future<void> fetchStocks() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      final ignoreVix = !(await SharedPrefsService.getUseVixFilter());
+      final activeProgramId = await SharedPrefsService.getActiveProgramId();
+      final programId = selectedProgramId.value.isEmpty
+          ? (activeProgramId.isEmpty ? null : activeProgramId)
+          : selectedProgramId.value;
+
+      final response = await _apiService.scanStocks(
+        maxMarketCap: (double.tryParse(maxMarketCapCtrl.text) ?? 0) * 1000000,
+        ignoreVix: ignoreVix,
+        minAvgTransactionValue:
+            double.tryParse(minAvgTransactionValueCtrl.text) ?? 0,
+        minAvgVolume: double.tryParse(minAvgVolumeCtrl.text) ?? 0,
+        minMarketCap: (double.tryParse(minMarketCapCtrl.text) ?? 0) * 1000000,
+        minPrice: double.tryParse(minPriceCtrl.text) ?? 0.0,
+        minVolatility: double.tryParse(minVolatilityCtrl.text) ?? 0.0,
+        topNStocks: double.tryParse(topNStocksCtrl.text) ?? 0,
+        programId: programId?.isEmpty == true ? null : programId,
+        strictRules: strictRules.value,
+        adxMin: double.tryParse(adxMinCtrl.text),
+        volumeSpikeRequired: volumeSpikeRequired.value,
+        dailyLossLimitPct: double.tryParse(dailyLossLimitCtrl.text),
+        allowIntradayPrices: allowIntradayPrices.value,
+      );
+
+      final stockScanResponse = StockScanResponse.fromJson(response.data);
+      scanResponse.value = stockScanResponse;
+
+      await SharedPrefsService.saveLastScanResponse(stockScanResponse);
+      log('API Response: ${stockScanResponse.toJson()}');
+
+      await _fetchScanHistory(isRefresh: true);
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> _fetchScanHistory({bool isRefresh = false}) async {

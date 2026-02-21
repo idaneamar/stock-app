@@ -74,6 +74,8 @@ class SettingsScreen extends StatelessWidget {
             _buildHeader(),
             const SizedBox(height: UIConstants.spacingXXXL),
             _buildSettingsCard(),
+            const SizedBox(height: UIConstants.spacingL),
+            _buildUseVixFilterCard(),
             const SizedBox(height: UIConstants.spacingXL),
             _buildEditButton(context),
           ],
@@ -131,6 +133,42 @@ class SettingsScreen extends StatelessWidget {
         );
       }),
     );
+  }
+
+  Widget _buildUseVixFilterCard() {
+    return Obx(() => Container(
+          width: double.infinity,
+          padding: AppPadding.allXL,
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(UIConstants.radiusL),
+            border: Border.all(color: AppColors.grey300),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.grey.withValues(alpha: 0.1),
+                blurRadius: UIConstants.elevationXL,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SwitchListTile.adaptive(
+            value: controller.useVixFilter.value,
+            onChanged: (value) => controller.setUseVixFilter(value),
+            title: const Text(
+              AppStrings.useVixFilter,
+              style: TextStyle(
+                fontSize: UIConstants.fontXL,
+                fontWeight: FontWeight.w600,
+                color: AppColors.grey600,
+              ),
+            ),
+            subtitle: Text(
+              AppStrings.useVixFilterHint,
+              style: TextStyle(fontSize: 12, color: AppColors.grey600),
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ));
   }
 
   Widget _buildEditButton(BuildContext context) {

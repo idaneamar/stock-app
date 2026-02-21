@@ -87,7 +87,6 @@ class _StrategyEditorDialog extends StatefulWidget {
 class _StrategyEditorDialogState extends State<_StrategyEditorDialog> {
   late final TextEditingController _nameController;
   bool _enabled = true;
-  bool _ignoreVix = false;
   String? _validationErrorMessage;
   bool _isSaving = false;
 
@@ -105,7 +104,6 @@ class _StrategyEditorDialogState extends State<_StrategyEditorDialog> {
     final initial = widget.initial;
     _nameController = TextEditingController(text: initial?.name ?? '');
     _enabled = initial?.enabled ?? true;
-    _ignoreVix = initial?.ignoreVix ?? false;
 
     final config = (initial?.config ?? _defaultConfigTemplate());
     _hydrateFromConfig(config);
@@ -420,7 +418,6 @@ class _StrategyEditorDialogState extends State<_StrategyEditorDialog> {
     final payload = <String, dynamic>{
       'name': name,
       'enabled': _enabled,
-      'ignore_vix': _ignoreVix,
       'config': config,
     };
 
@@ -499,24 +496,6 @@ class _StrategyEditorDialogState extends State<_StrategyEditorDialog> {
                                     _validationErrorMessage = null;
                                   }),
                               title: const Text(AppStrings.enabled),
-                            ),
-                            const SizedBox(height: 8),
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              value: !_ignoreVix,
-                              onChanged:
-                                  (v) => setState(() {
-                                    _ignoreVix = !v;
-                                    _validationErrorMessage = null;
-                                  }),
-                              title: const Text(AppStrings.useVixFilter),
-                              subtitle: Text(
-                                AppStrings.useVixFilterHint,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.grey600,
-                                ),
-                              ),
                             ),
                             const SizedBox(height: 12),
                             Text(

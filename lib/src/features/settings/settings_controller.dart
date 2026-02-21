@@ -8,6 +8,7 @@ import 'package:stock_app/src/models/settings_response.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/handlers/ui_feedback.dart';
 import 'package:stock_app/src/utils/services/api_service.dart';
+import 'package:stock_app/src/utils/services/shared_prefs_service.dart';
 
 class SettingsController extends GetxController {
   final ApiService _apiService;
@@ -18,6 +19,9 @@ class SettingsController extends GetxController {
   final RxString error = ''.obs;
   final RxBool isInitialLoading = true.obs;
 
+  /// Global "Use VIX filter" for all scans/analyses (persisted in SharedPrefs).
+  final RxBool useVixFilter = true.obs;
+
   SettingsController({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
@@ -26,8 +30,14 @@ class SettingsController extends GetxController {
     super.onInit();
     Future.microtask(() async {
       await fetchSettings();
+      useVixFilter.value = await SharedPrefsService.getUseVixFilter();
       if (!isClosed) isInitialLoading.value = false;
     });
+  }
+
+  Future<void> setUseVixFilter(bool value) async {
+    useVixFilter.value = value;
+    await SharedPrefsService.setUseVixFilter(value);
   }
 
   Future<void> fetchSettings() async {
