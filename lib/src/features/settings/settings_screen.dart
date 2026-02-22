@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/features/settings/settings_controller.dart';
-import 'package:stock_app/src/features/main_container/main_container_controller.dart';
 import 'package:stock_app/src/utils/formatters/number_format.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
@@ -36,7 +35,7 @@ class SettingsScreen extends StatelessWidget {
       iconTheme: const IconThemeData(color: AppColors.white),
       leading: IconButton(
         icon: const Icon(Icons.menu, color: AppColors.white),
-        onPressed: () => Get.find<MainContainerController>().openDrawer(),
+        onPressed: () {},
       ),
     );
   }

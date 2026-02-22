@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/features/excel/all_excel_controller.dart';
 import 'package:stock_app/src/features/excel_viewer/analysis_excel_loader_screen.dart';
-import 'package:stock_app/src/features/main_container/main_container_controller.dart';
 import 'package:stock_app/src/models/completed_scans_response.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/handlers/ui_feedback.dart';
@@ -30,10 +29,7 @@ class AllExcelScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.white),
         leading: IconButton(
           icon: const Icon(Icons.menu, color: AppColors.white),
-          onPressed: () {
-            final mainController = Get.find<MainContainerController>();
-            mainController.openDrawer();
-          },
+          onPressed: () {},
         ),
       ),
       body: Container(

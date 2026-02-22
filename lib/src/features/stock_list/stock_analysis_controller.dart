@@ -223,13 +223,10 @@ class StockAnalysisController extends GetxController {
 
         Get.find<HomeController>().refreshScanHistory();
 
-        MainContainerController mainController;
         try {
-          mainController = Get.find<MainContainerController>();
-        } catch (e) {
-          mainController = Get.put(MainContainerController(), permanent: true);
-        }
-        mainController.setInitialIndex(0);
+          Get.find<MainContainerController>(tag: 'main_container')
+              .changeScreen(0);
+        } catch (_) {}
         Get.offAll(() => const MainContainerScreen());
       } else {
         throw Exception(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
-import 'package:stock_app/src/features/main_container/main_container_controller.dart';
 import 'package:stock_app/src/features/trades/full_active_trades_controller.dart';
 import 'package:stock_app/src/features/trades/widgets/active_trade_card.dart';
 import 'package:stock_app/src/features/trades/widgets/date_filter_widget.dart';
@@ -44,7 +43,7 @@ class FullActiveTradesScreen extends StatelessWidget {
       iconTheme: const IconThemeData(color: AppColors.white),
       leading: IconButton(
         icon: const Icon(Icons.menu, color: AppColors.white),
-        onPressed: () => Get.find<MainContainerController>().openDrawer(),
+        onPressed: () {},
       ),
     );
   }

@@ -9,8 +9,6 @@ import 'package:stock_app/src/models/scan_history_response.dart';
 import 'package:stock_app/src/utils/app_dialog.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
-import 'package:stock_app/src/utils/widget/app_drawer.dart';
-import 'package:stock_app/src/features/main_container/main_container_controller.dart';
 import 'package:stock_app/src/utils/handlers/ui_feedback.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -39,16 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AppDrawer(),
       appBar: HomeAppBar(
         controller: controller,
-        onOpenDrawer: () {
-          try {
-            Get.find<MainContainerController>().openDrawer();
-          } catch (e) {
-            Scaffold.of(context).openDrawer();
-          }
-        },
+        onOpenDrawer: () {},
         onDeleteAll: _showDeleteAllConfirmation,
       ),
       body: Container(
@@ -56,13 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                'StockApp 2 22/02/2026',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ),
             Expanded(
               child: HomeScansSection(
                 controller: controller,

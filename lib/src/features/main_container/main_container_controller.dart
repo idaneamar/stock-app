@@ -1,40 +1,34 @@
-// ignore_for_file: deprecated_member_use
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stock_app/src/features/dashboard/dashboard_controller.dart';
 import 'package:stock_app/src/features/excel/all_excel_controller.dart';
 import 'package:stock_app/src/features/home/home_controller.dart';
 import 'package:stock_app/src/features/settings/settings_controller.dart';
 import 'package:stock_app/src/features/trades/full_active_trades_controller.dart';
 
+/// Screen indices used throughout the app.
+class ScreenIndex {
+  static const int dashboard = 0;
+  static const int scans = 1;
+  static const int programs = 2;
+  static const int strategies = 3;
+  static const int openTrades = 4;
+  static const int closedTrades = 5;
+  static const int excel = 6;
+  static const int recommendations = 7;
+  static const int settings = 8;
+
+  static const int total = 9;
+}
+
 class MainContainerController extends GetxController {
   final RxInt currentIndex = 0.obs;
-  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-  late PageController pageController;
 
-  @override
-  void onInit() {
-    super.onInit();
-    pageController = PageController(initialPage: 0);
-  }
-
-  @override
-  void onClose() {
-    pageController.dispose();
-    super.onClose();
-  }
+  // Tracks which screens have been initialised (lazy-load screens on first visit)
+  final Set<int> loadedIndices = {ScreenIndex.dashboard};
 
   void changeScreen(int index) {
-    currentIndex.value = index;
-    pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    _refreshScreenData(index);
-  }
-
-  void onPageChanged(int index) {
+    if (index < 0 || index >= ScreenIndex.total) return;
+    loadedIndices.add(index);
     currentIndex.value = index;
     _refreshScreenData(index);
   }
@@ -42,36 +36,19 @@ class MainContainerController extends GetxController {
   void _refreshScreenData(int index) {
     try {
       switch (index) {
-        case 0: // Home Screen
-          final homeController = Get.find<HomeController>();
-          homeController.refreshScanHistory();
-          break;
-        case 1: // All Excel Screen
-          final excelController = Get.find<AllExcelController>();
-          excelController.refreshScans();
-          break;
-        case 2: // All Recommendations Screen
-          final fullTradesController = Get.find<FullActiveTradesController>();
-          fullTradesController.refreshFullActiveTrades();
-          break;
-        case 3: // Settings Screen
-          final settingsController = Get.put(
-            SettingsController(),
-            permanent: true,
-          );
-          settingsController.refreshSettings();
-          break;
+        case ScreenIndex.dashboard:
+          Get.find<DashboardController>().fetchDashboardData();
+        case ScreenIndex.scans:
+          Get.find<HomeController>().refreshScanHistory();
+        case ScreenIndex.excel:
+          Get.find<AllExcelController>().refreshScans();
+        case ScreenIndex.recommendations:
+          Get.find<FullActiveTradesController>().refreshFullActiveTrades();
+        case ScreenIndex.settings:
+          Get.find<SettingsController>().refreshSettings();
       }
     } catch (_) {
-      // Controllers might not be initialized yet, which is fine.
+      // Controller might not be initialised yet — that is fine.
     }
-  }
-
-  void openDrawer() {
-    scaffoldKey.currentState?.openDrawer();
-  }
-
-  void setInitialIndex(int index) {
-    currentIndex.value = index;
   }
 }
