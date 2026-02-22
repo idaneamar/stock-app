@@ -66,4 +66,9 @@ class SharedPrefsService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_activeProgramIdKey) ?? '';
   }
+
+  /// Clears active program (e.g. after strategy changes). Persists empty so "No Program" is restored.
+  static Future<void> clearActiveProgramId() async {
+    await setActiveProgramId('');
+  }
 }

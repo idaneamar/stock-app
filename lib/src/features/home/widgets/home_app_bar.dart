@@ -45,18 +45,19 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       iconTheme: const IconThemeData(color: AppColors.white),
       actions: [
         Obx(
-          () => controller.isDeletingAll.value
-              ? const Padding(
-                  padding: AppPadding.allL,
-                  child: LoadingIndicator(color: AppColors.white),
-                )
-              : TextButton(
-                  onPressed: onDeleteAll,
-                  child: const Text(
-                    AppStrings.deleteAllScans,
-                    style: TextStyle(color: AppColors.white),
+          () =>
+              controller.isDeletingAll.value
+                  ? const Padding(
+                    padding: AppPadding.allL,
+                    child: LoadingIndicator(color: AppColors.white),
+                  )
+                  : TextButton(
+                    onPressed: onDeleteAll,
+                    child: const Text(
+                      AppStrings.deleteAllScans,
+                      style: TextStyle(color: AppColors.white),
+                    ),
                   ),
-                ),
         ),
       ],
       leading: IconButton(
@@ -69,4 +70,3 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
-

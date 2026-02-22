@@ -53,22 +53,40 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Container(
         color: AppColors.grey50,
-        child: HomeScansSection(
-          controller: controller,
-          scrollController: _scrollController,
-          onLoadMore: controller.loadNextPage,
-          onRefresh: controller.refreshScanHistory,
-          onDelete: _showDeleteConfirmation,
-          onOpenScan: (id) => Get.to(() => ScanAnalysisScreen(scanId: id)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                'StockApp 2 22/02/2026',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Expanded(
+              child: HomeScansSection(
+                controller: controller,
+                scrollController: _scrollController,
+                onLoadMore: controller.loadNextPage,
+                onRefresh: controller.refreshScanHistory,
+                onDelete: _showDeleteConfirmation,
+                onOpenScan:
+                    (id) => Get.to(() => ScanAnalysisScreen(scanId: id)),
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "home_scan_fab",
+        elevation: 8,
         onPressed: () => _openScanDialog(context),
         backgroundColor: AppColors.blue,
         foregroundColor: AppColors.white,
+        label: const Text("Scan Stocks"),
         icon: const Icon(Icons.search),
-        label: const Text(AppStrings.scanStocks),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 

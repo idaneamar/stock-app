@@ -62,7 +62,8 @@ class AppDrawerContent extends StatelessWidget {
                   iconColor: AppColors.blue,
                   title: AppStrings.allRecommendations,
                   subtitle: AppStrings.drawerRecommendationsSubtitle,
-                  onTap: () => _handleMenuSelection(context, 'full_active_trades'),
+                  onTap:
+                      () => _handleMenuSelection(context, 'full_active_trades'),
                 ),
                 const SizedBox(height: 16),
                 DrawerItemCard(
@@ -185,5 +186,4 @@ class AppDrawerContent extends StatelessWidget {
       ),
     );
   }
-
 }

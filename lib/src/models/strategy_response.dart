@@ -68,8 +68,10 @@ class StrategyItem {
             ? rawId.toInt()
             : int.tryParse(rawId?.toString() ?? '') ?? 0;
     final configJson = json['config'];
-    final config = configJson is Map<String, dynamic> ? configJson : <String, dynamic>{};
-    final ignoreVix = json['ignore_vix'] == true || (config['ignore_vix'] == true);
+    final config =
+        configJson is Map<String, dynamic> ? configJson : <String, dynamic>{};
+    final ignoreVix =
+        json['ignore_vix'] == true || (config['ignore_vix'] == true);
     return StrategyItem(
       id: id,
       name: (json['name'] ?? '').toString(),

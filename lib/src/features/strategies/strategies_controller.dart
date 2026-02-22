@@ -28,18 +28,7 @@ class StrategiesController extends GetxController {
             .toList(),
       );
       final savedActiveId = await SharedPrefsService.getActiveProgramId();
-      if (savedActiveId.isNotEmpty) {
-        selectedProgramId.value = savedActiveId;
-      } else {
-        final active = (data['active_program'] as Map?) ?? {};
-        final activeId = active['active_program_id'];
-        if (activeId is String && activeId.isNotEmpty) {
-          selectedProgramId.value = activeId;
-        } else if (programs.isNotEmpty) {
-          final firstId = (programs.first['program_id'] ?? '').toString();
-          if (firstId.isNotEmpty) selectedProgramId.value = firstId;
-        }
-      }
+      selectedProgramId.value = savedActiveId;
     } catch (e) {
       log('Failed to load programs: $e');
     }
@@ -48,6 +37,12 @@ class StrategiesController extends GetxController {
   void setActiveProgram(String programId) {
     selectedProgramId.value = programId;
     SharedPrefsService.setActiveProgramId(programId);
+  }
+
+  /// Call after any manual strategy change (toggle, create, edit, delete).
+  Future<void> clearActiveProgramOnStrategyChange() async {
+    await SharedPrefsService.clearActiveProgramId();
+    selectedProgramId.value = '';
   }
 
   Future<void> fetchStrategies({bool enabledOnly = false}) async {
@@ -76,6 +71,7 @@ class StrategiesController extends GetxController {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final parsed = StrategyResponse.fromJson(response.data);
         strategies.add(parsed.data);
+        await clearActiveProgramOnStrategyChange();
         return true;
       }
       return false;
@@ -94,6 +90,7 @@ class StrategiesController extends GetxController {
         if (index != -1) {
           strategies[index] = parsed.data;
         }
+        await clearActiveProgramOnStrategyChange();
         return true;
       }
       return false;
@@ -108,6 +105,7 @@ class StrategiesController extends GetxController {
       final response = await _api.deleteStrategy(id);
       if (response.statusCode == 200) {
         strategies.removeWhere((s) => s.id == id);
+        await clearActiveProgramOnStrategyChange();
         return true;
       }
       return false;

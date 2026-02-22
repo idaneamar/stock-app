@@ -90,7 +90,8 @@ class CriteriaUsed {
       minMarketCap: (json['min_market_cap'] ?? 0).toDouble(),
       maxMarketCap: (json['max_market_cap'] ?? 0).toDouble(),
       minAvgVolume: (json['min_avg_volume'] ?? 0).toDouble(),
-      minAvgTransactionValue: (json['min_avg_transaction_value'] ?? 0).toDouble(),
+      minAvgTransactionValue:
+          (json['min_avg_transaction_value'] ?? 0).toDouble(),
       minVolatility: (json['min_volatility'] ?? 0).toDouble(),
       minPrice: (json['min_price'] ?? 0).toDouble(),
       topNStocks: (json['top_n_stocks'] ?? 0).toInt(),

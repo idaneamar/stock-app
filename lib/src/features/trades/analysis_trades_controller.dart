@@ -17,10 +17,8 @@ class AnalysisTradesController extends ChangeNotifier {
   bool isDownloading = false;
   String errorMessage = '';
 
-  AnalysisTradesController({
-    required this.tradeData,
-    ApiService? apiService,
-  }) : _apiService = apiService ?? ApiService();
+  AnalysisTradesController({required this.tradeData, ApiService? apiService})
+    : _apiService = apiService ?? ApiService();
 
   double totalInvestment(List<Trade> trades) =>
       trades.fold(0.0, (sum, t) => sum + (t.entryPrice * t.positionSize));
@@ -54,21 +52,23 @@ class AnalysisTradesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiService.getTradesExcel(scanId: tradeData.scanId);
+      final response = await _apiService.getTradesExcel(
+        scanId: tradeData.scanId,
+      );
       if (response.statusCode != 200) {
         throw Exception(AppStrings.failedToDownloadExcelFile);
       }
 
-      final bytes = response.data is List<int>
-          ? response.data as List<int>
-          : List<int>.from(response.data);
+      final bytes =
+          response.data is List<int>
+              ? response.data as List<int>
+              : List<int>.from(response.data);
       final fileName = 'trades_${tradeData.scanId}.xlsx';
 
       if (kIsWeb) {
-        final blob = html.Blob(
-          [bytes],
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        );
+        final blob = html.Blob([
+          bytes,
+        ], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         final url = html.Url.createObjectUrlFromBlob(blob);
         html.AnchorElement(href: url)
           ..setAttribute('download', fileName)
@@ -95,7 +95,10 @@ class AnalysisTradesController extends ChangeNotifier {
     }
   }
 
-  Future<void> updateTrade(BuildContext? context, Map<String, dynamic> updates) async {
+  Future<void> updateTrade(
+    BuildContext? context,
+    Map<String, dynamic> updates,
+  ) async {
     isBusy = true;
     notifyListeners();
     try {

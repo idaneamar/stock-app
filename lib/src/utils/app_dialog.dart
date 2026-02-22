@@ -145,75 +145,81 @@ class AppDialogs {
             ),
             actions: [
               InkWell(
-                onTap: isDeleting.value
-                    ? null
-                    : () {
-                        _closeDialog();
-                        if (onCancel != null) onCancel();
-                      },
+                onTap:
+                    isDeleting.value
+                        ? null
+                        : () {
+                          _closeDialog();
+                          if (onCancel != null) onCancel();
+                        },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDeleting.value
-                        ? AppColors.grey.withValues(alpha: 0.5)
-                        : AppColors.grey,
+                    color:
+                        isDeleting.value
+                            ? AppColors.grey.withValues(alpha: 0.5)
+                            : AppColors.grey,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   padding: const EdgeInsets.all(8),
                   child: Text(
                     "Cancel",
                     style: TextStyle(
-                      color: isDeleting.value
-                          ? AppColors.white.withValues(alpha: 0.5)
-                          : AppColors.white,
+                      color:
+                          isDeleting.value
+                              ? AppColors.white.withValues(alpha: 0.5)
+                              : AppColors.white,
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               InkWell(
-                onTap: isDeleting.value
-                    ? null
-                    : () async {
-                        if (onDelete != null) {
-                          final success = await onDelete();
-                          if (success) {
-                            _closeDialog();
+                onTap:
+                    isDeleting.value
+                        ? null
+                        : () async {
+                          if (onDelete != null) {
+                            final success = await onDelete();
+                            if (success) {
+                              _closeDialog();
+                            }
                           }
-                        }
-                      },
+                        },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDeleting.value
-                        ? AppColors.error.withValues(alpha: 0.7)
-                        : AppColors.error,
+                    color:
+                        isDeleting.value
+                            ? AppColors.error.withValues(alpha: 0.7)
+                            : AppColors.error,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   padding: const EdgeInsets.all(8),
-                  child: isDeleting.value
-                      ? const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.white,
+                  child:
+                      isDeleting.value
+                          ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              "Deleting...",
-                              style: TextStyle(color: AppColors.white),
-                            ),
-                          ],
-                        )
-                      : const Text(
-                          "Delete",
-                          style: TextStyle(color: AppColors.white),
-                        ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Deleting...",
+                                style: TextStyle(color: AppColors.white),
+                              ),
+                            ],
+                          )
+                          : const Text(
+                            "Delete",
+                            style: TextStyle(color: AppColors.white),
+                          ),
                 ),
               ),
             ],

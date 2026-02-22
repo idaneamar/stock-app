@@ -351,10 +351,7 @@ class _ExcelViewerScreenState extends State<ExcelViewerScreen> {
               headingRowColor: WidgetStateProperty.all(AppColors.grey50),
               columns: _buildColumns(rows.first),
               rows: _buildRows(rows.skip(1).toList()),
-              border: TableBorder.all(
-                color: AppColors.grey300,
-                width: 0.5,
-              ),
+              border: TableBorder.all(color: AppColors.grey300, width: 0.5),
             ),
           ),
         ),

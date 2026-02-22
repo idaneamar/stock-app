@@ -54,13 +54,21 @@ class ActiveTradeCard extends StatelessWidget {
         if (onEdit != null)
           IconButton(
             onPressed: onEdit,
-            icon: const Icon(Icons.edit, color: AppColors.blue, size: UIConstants.iconM),
+            icon: const Icon(
+              Icons.edit,
+              color: AppColors.blue,
+              size: UIConstants.iconM,
+            ),
             tooltip: AppStrings.editTrade,
           ),
         if (onDelete != null)
           IconButton(
             onPressed: onDelete,
-            icon: const Icon(Icons.delete, color: AppColors.error, size: UIConstants.iconM),
+            icon: const Icon(
+              Icons.delete,
+              color: AppColors.error,
+              size: UIConstants.iconM,
+            ),
             tooltip: AppStrings.deleteTrade,
           ),
       ],
@@ -77,7 +85,9 @@ class ActiveTradeCard extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          trade.symbol.isNotEmpty ? trade.symbol.substring(0, 1).toUpperCase() : 'T',
+          trade.symbol.isNotEmpty
+              ? trade.symbol.substring(0, 1).toUpperCase()
+              : 'T',
           style: const TextStyle(
             color: AppColors.white,
             fontSize: UIConstants.fontXXL,
@@ -94,7 +104,10 @@ class ActiveTradeCard extends StatelessWidget {
       children: [
         Text(
           trade.symbol,
-          style: const TextStyle(fontSize: UIConstants.fontXXL, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: UIConstants.fontXXL,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         Row(
           children: [
@@ -110,12 +123,30 @@ class ActiveTradeCard extends StatelessWidget {
   Widget _buildDetails() {
     return Column(
       children: [
-        TradeDetailRow(label: AppStrings.entryPrice, value: '\$${trade.entryPrice.toStringAsFixed(2)}'),
-        TradeDetailRow(label: AppStrings.stopLoss, value: '\$${trade.stopLoss.toStringAsFixed(2)}'),
-        TradeDetailRow(label: AppStrings.takeProfit, value: '\$${trade.takeProfit.toStringAsFixed(2)}'),
-        TradeDetailRow(label: AppStrings.positionSize, value: trade.positionSize.toString()),
-        TradeDetailRow(label: AppStrings.riskRewardRatio, value: '1:${trade.riskRewardRatio.toStringAsFixed(2)}'),
-        TradeDetailRow(label: AppStrings.entryDate, value: DateFormatter.formatDateISO(trade.entryDate)),
+        TradeDetailRow(
+          label: AppStrings.entryPrice,
+          value: '\$${trade.entryPrice.toStringAsFixed(2)}',
+        ),
+        TradeDetailRow(
+          label: AppStrings.stopLoss,
+          value: '\$${trade.stopLoss.toStringAsFixed(2)}',
+        ),
+        TradeDetailRow(
+          label: AppStrings.takeProfit,
+          value: '\$${trade.takeProfit.toStringAsFixed(2)}',
+        ),
+        TradeDetailRow(
+          label: AppStrings.positionSize,
+          value: trade.positionSize.toString(),
+        ),
+        TradeDetailRow(
+          label: AppStrings.riskRewardRatio,
+          value: '1:${trade.riskRewardRatio.toStringAsFixed(2)}',
+        ),
+        TradeDetailRow(
+          label: AppStrings.entryDate,
+          value: DateFormatter.formatDateISO(trade.entryDate),
+        ),
         TradeDetailRow(label: AppStrings.exitDate, value: trade.exitDate),
       ],
     );

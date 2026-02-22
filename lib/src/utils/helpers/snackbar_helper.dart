@@ -72,11 +72,12 @@ class SnackbarHelper {
     required IconData icon,
     Duration duration = UIConstants.snackbarNormal,
   }) {
-    final type = backgroundColor == AppColors.error
-        ? UiMessageType.error
-        : (backgroundColor == AppColors.success
-            ? UiMessageType.success
-            : UiMessageType.info);
+    final type =
+        backgroundColor == AppColors.error
+            ? UiMessageType.error
+            : (backgroundColor == AppColors.success
+                ? UiMessageType.success
+                : UiMessageType.info);
 
     final context = Get.context;
     if (context == null) {

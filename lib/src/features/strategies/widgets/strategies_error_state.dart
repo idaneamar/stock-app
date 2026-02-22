@@ -42,4 +42,3 @@ class StrategiesErrorState extends StatelessWidget {
     );
   }
 }
-

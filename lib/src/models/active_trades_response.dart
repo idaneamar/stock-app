@@ -111,10 +111,7 @@ class DateFilter {
   final String startDate;
   final String endDate;
 
-  DateFilter({
-    required this.startDate,
-    required this.endDate,
-  });
+  DateFilter({required this.startDate, required this.endDate});
 
   factory DateFilter.fromJson(Map<String, dynamic> json) {
     return DateFilter(
@@ -124,10 +121,7 @@ class DateFilter {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'start_date': startDate,
-      'end_date': endDate,
-    };
+    return {'start_date': startDate, 'end_date': endDate};
   }
 }
 

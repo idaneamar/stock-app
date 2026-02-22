@@ -28,6 +28,7 @@ abstract class AppStrings {
   static const String deleteAllScans = 'Delete All Scans';
   static const String tapToScanStocks =
       'Tap the scan button to start stock scanning';
+
   /// Shown when scan history is empty; run scan is only from Strategies.
   static const String runScanFromStrategies =
       'Run a scan from the Strategies menu (left drawer)';
@@ -63,6 +64,7 @@ abstract class AppStrings {
   static const String runScan = 'Run Scan';
   static const String runScanHint = 'Run a scan with the selected program';
   static const String selectProgram = 'Select Program';
+  static const String noProgram = 'No Program';
   static const String programCreated = 'Program created successfully';
   static const String programCreateFailed = 'Failed to create program';
   static const String programNameRequired = 'Program name is required';

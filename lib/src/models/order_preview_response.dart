@@ -47,7 +47,9 @@ class OrderPreviewBundle {
             ? null
             : (json['risk_per_trade'] as num).toDouble();
     final maxSharesPerOrder =
-        json['max_shares_per_order'] is int ? json['max_shares_per_order'] as int : null;
+        json['max_shares_per_order'] is int
+            ? json['max_shares_per_order'] as int
+            : null;
 
     final analysis = json['analysis'];
     OrderPreviewSection unified;
@@ -77,7 +79,7 @@ class OrderPreviewBundle {
           totalOrders: mergedOrders.length,
           originalTotalInvestment:
               resultsSection.originalTotalInvestment +
-                  suggestionsSection.originalTotalInvestment,
+              suggestionsSection.originalTotalInvestment,
           orders: mergedOrders,
         );
       }

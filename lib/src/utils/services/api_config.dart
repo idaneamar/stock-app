@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const String _prodHttpBaseUrl = 'https://stock-api-1-jhsa.onrender.com/';
+  static const String _prodHttpBaseUrl =
+      'https://stock-api-1-jhsa.onrender.com/';
   static const String _localHttpBaseUrl = 'http://localhost:8000/';
 
   static String get httpBaseUrl {
     const override = String.fromEnvironment('API_BASE_URL');
     if (override.isNotEmpty) return _normalizeHttpBaseUrl(override);
-    return _normalizeHttpBaseUrl(kReleaseMode ? _prodHttpBaseUrl : _localHttpBaseUrl);
+    return _normalizeHttpBaseUrl(
+      kReleaseMode ? _prodHttpBaseUrl : _localHttpBaseUrl,
+    );
   }
 
   static String get webSocketBaseUrl {
@@ -24,7 +27,8 @@ class ApiConfig {
 
   static String _normalizeWebSocketBaseUrl(String url) {
     var normalized = url.trim();
-    if (normalized.endsWith('/')) normalized = normalized.substring(0, normalized.length - 1);
+    if (normalized.endsWith('/'))
+      normalized = normalized.substring(0, normalized.length - 1);
     return normalized;
   }
 
@@ -34,4 +38,3 @@ class ApiConfig {
     return uri.replace(scheme: scheme, path: '').toString();
   }
 }
-

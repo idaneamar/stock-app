@@ -6,14 +6,14 @@ import 'dart:developer';
 
 class FullActiveTradesController extends GetxController {
   final ApiService _apiService = ApiService();
-  
+
   final Rx<ActiveTradesData?> fullActiveTrades = Rx<ActiveTradesData?>(null);
   final RxBool isLoadingFullTrades = false.obs;
   final RxString fullTradesError = ''.obs;
-  
+
   final Rx<DateTime?> selectedStartDate = Rx<DateTime?>(null);
   final Rx<DateTime?> selectedEndDate = Rx<DateTime?>(null);
-  
+
   // Store initial date range for date picker limits
   final Rx<DateTime?> initialStartDate = Rx<DateTime?>(null);
   final Rx<DateTime?> initialEndDate = Rx<DateTime?>(null);
@@ -35,7 +35,9 @@ class FullActiveTradesController extends GetxController {
         // Set selected dates to initial values
         selectedStartDate.value = dateRangeResponse.data.firstScanDateTime;
         selectedEndDate.value = DateTime.now(); // Set default end date to today
-        log('Set default date range: ${dateRangeResponse.data.firstScanDate} to ${dateRangeResponse.data.lastScanDate}');
+        log(
+          'Set default date range: ${dateRangeResponse.data.firstScanDate} to ${dateRangeResponse.data.lastScanDate}',
+        );
       }
     } catch (e) {
       log('Error fetching date range: $e');
@@ -49,16 +51,18 @@ class FullActiveTradesController extends GetxController {
       fullTradesError.value = '';
 
       final dateRange = _getDateRange();
-      
+
       log('Fetching active trades for analysis');
-      
+
       final response = await _apiService.getActiveTrades(
         startDate: dateRange['start']!,
         endDate: dateRange['end']!,
       );
-      
+
       if (response.statusCode == 200) {
-        final activeTradesResponse = ActiveTradesResponse.fromJson(response.data);
+        final activeTradesResponse = ActiveTradesResponse.fromJson(
+          response.data,
+        );
         fullActiveTrades.value = activeTradesResponse.data;
         log(
           'Fetched ${activeTradesResponse.data.analysis.length} analysis trades',
@@ -107,20 +111,24 @@ class FullActiveTradesController extends GetxController {
   Map<String, String> _getDateRange() {
     DateTime startDate;
     DateTime endDate;
-    
+
     // Use selected dates if available, otherwise use default (current month)
     if (selectedStartDate.value != null && selectedEndDate.value != null) {
       startDate = DateTime.utc(
         selectedStartDate.value!.year,
         selectedStartDate.value!.month,
         selectedStartDate.value!.day,
-        0, 0, 0,
+        0,
+        0,
+        0,
       );
       endDate = DateTime.utc(
         selectedEndDate.value!.year,
         selectedEndDate.value!.month,
         selectedEndDate.value!.day,
-        23, 59, 59,
+        23,
+        59,
+        59,
       );
     } else {
       // Default: Current month range (UTC)
@@ -128,7 +136,7 @@ class FullActiveTradesController extends GetxController {
       startDate = DateTime.utc(now.year, now.month, 1, 0, 0, 0);
       endDate = DateTime.utc(now.year, now.month, now.day, 23, 59, 59);
     }
-    
+
     // Format UTC dates (already in UTC)
     return {
       'start': startDate.toIso8601String().split('T')[0],

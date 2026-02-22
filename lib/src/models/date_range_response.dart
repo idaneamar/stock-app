@@ -34,10 +34,7 @@ class DateRangeData {
   final String firstScanDate;
   final String lastScanDate;
 
-  DateRangeData({
-    required this.firstScanDate,
-    required this.lastScanDate,
-  });
+  DateRangeData({required this.firstScanDate, required this.lastScanDate});
 
   factory DateRangeData.fromJson(Map<String, dynamic> json) {
     return DateRangeData(
@@ -47,10 +44,7 @@ class DateRangeData {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'first_scan_date': firstScanDate,
-      'last_scan_date': lastScanDate,
-    };
+    return {'first_scan_date': firstScanDate, 'last_scan_date': lastScanDate};
   }
 
   DateTime get firstScanDateTime {

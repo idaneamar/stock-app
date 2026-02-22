@@ -32,44 +32,45 @@ class ResetAllAction {
         }
         return const Text(AppStrings.resetAllDataConfirm);
       }),
-      onOk: isResetting.value
-          ? null
-          : () async {
-              isResetting.value = true;
-              try {
-                final response = await ApiService().resetAll();
-                if (response.data['success'] == true) {
+      onOk:
+          isResetting.value
+              ? null
+              : () async {
+                isResetting.value = true;
+                try {
+                  final response = await ApiService().resetAll();
+                  if (response.data['success'] == true) {
+                    UiFeedback.showSnackBar(
+                      context,
+                      message:
+                          response.data['message'] ??
+                          AppStrings.dataResetSuccessfully,
+                      type: UiMessageType.success,
+                    );
+                    try {
+                      Get.delete<MainContainerController>(force: true);
+                      Get.delete<HomeController>(force: true);
+                      Get.delete<AllExcelController>(force: true);
+                      Get.delete<FullActiveTradesController>(force: true);
+                    } catch (_) {}
+                    Get.offAll(() => const MainContainerScreen());
+                  } else {
+                    UiFeedback.showSnackBar(
+                      context,
+                      message: AppStrings.failedToResetData,
+                      type: UiMessageType.error,
+                    );
+                  }
+                } catch (e) {
                   UiFeedback.showSnackBar(
                     context,
-                    message: response.data['message'] ??
-                        AppStrings.dataResetSuccessfully,
-                    type: UiMessageType.success,
-                  );
-                  try {
-                    Get.delete<MainContainerController>(force: true);
-                    Get.delete<HomeController>(force: true);
-                    Get.delete<AllExcelController>(force: true);
-                    Get.delete<FullActiveTradesController>(force: true);
-                  } catch (_) {}
-                  Get.offAll(() => const MainContainerScreen());
-                } else {
-                  UiFeedback.showSnackBar(
-                    context,
-                    message: AppStrings.failedToResetData,
+                    message: '${AppStrings.failedToResetData}: $e',
                     type: UiMessageType.error,
                   );
+                } finally {
+                  isResetting.value = false;
                 }
-              } catch (e) {
-                UiFeedback.showSnackBar(
-                  context,
-                  message: '${AppStrings.failedToResetData}: $e',
-                  type: UiMessageType.error,
-                );
-              } finally {
-                isResetting.value = false;
-              }
-            },
+              },
     );
   }
 }
-

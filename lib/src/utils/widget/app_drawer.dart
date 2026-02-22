@@ -11,4 +11,3 @@ class AppDrawer extends StatelessWidget {
     return Drawer(child: AppDrawerContent(onMenuSelected: onMenuSelected));
   }
 }
-

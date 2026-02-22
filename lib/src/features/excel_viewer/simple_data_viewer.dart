@@ -79,9 +79,15 @@ class SimpleDataViewer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildInfoRow(AppStrings.fileSize, '${rawData.length} ${AppStrings.bytes}'),
+                    _buildInfoRow(
+                      AppStrings.fileSize,
+                      '${rawData.length} ${AppStrings.bytes}',
+                    ),
                     _buildInfoRow(AppStrings.fileFormat, _detectFileFormat()),
-                    _buildInfoRow(AppStrings.firstBytes, rawData.take(10).join(', ')),
+                    _buildInfoRow(
+                      AppStrings.firstBytes,
+                      rawData.take(10).join(', '),
+                    ),
                     if (rawData.length > 20)
                       _buildInfoRow(
                         AppStrings.lastBytes,

@@ -76,7 +76,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
 
           return CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: _buildRunScanCard(context)),
+              SliverToBoxAdapter(child: _buildProgramCard(context)),
               if (controller.strategies.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -170,7 +170,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
     );
   }
 
-  Widget _buildRunScanCard(BuildContext context) {
+  Widget _buildProgramCard(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(UIConstants.marginL),
       padding: const EdgeInsets.all(UIConstants.paddingL),
@@ -189,112 +189,56 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppStrings.runScan,
+            AppStrings.program,
             style: const TextStyle(
               fontSize: UIConstants.fontL,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: UIConstants.spacingS),
-          Text(
-            AppStrings.runScanHint,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.grey600,
-            ),
-          ),
           const SizedBox(height: UIConstants.spacingM),
-          Obx(
-            () {
-              final items = controller.programs;
-              final value = controller.selectedProgramId.value;
-              final displayValue = items.isEmpty
-                  ? null
-                  : (value.isEmpty && items.isNotEmpty
-                      ? (items.first['program_id'] ?? '').toString()
-                      : value);
-              return DropdownButtonFormField<String>(
-                value: displayValue,
-                decoration: const InputDecoration(
-                  labelText: AppStrings.selectProgram,
-                  border: OutlineInputBorder(),
-                ),
-                items: items
-                    .map(
-                      (p) => DropdownMenuItem<String>(
-                        value: (p['program_id'] ?? '').toString(),
-                        child: Text(
-                          (p['name'] ?? p['program_id'] ?? 'Program').toString(),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setActiveProgram(v);
-                },
-              );
-            },
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-          Row(
-            children: [
-              Expanded(
-                child: Obx(
-                  () => ElevatedButton.icon(
-                    onPressed: controller.isRunningScan.value || controller.programs.isEmpty
-                        ? null
-                        : () async {
-                            if (controller.selectedProgramId.value.isEmpty) {
-                              UiFeedback.showSnackBar(
-                                context,
-                                message: AppStrings.selectProgramToRun,
-                                type: UiMessageType.info,
-                              );
-                              return;
-                            }
-                            final ok = await controller.runScan();
-                            if (!context.mounted) return;
-                            if (ok) {
-                              UiFeedback.showSnackBar(
-                                context,
-                                message: AppStrings.scanStarted,
-                                type: UiMessageType.success,
-                              );
-                            } else {
-                              UiFeedback.showSnackBar(
-                                context,
-                                message: AppStrings.scanStartFailed,
-                                type: UiMessageType.error,
-                              );
-                            }
-                          },
-                    icon: controller.isRunningScan.value
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
-                          )
-                        : const Icon(Icons.play_arrow),
-                    label: Text(controller.isRunningScan.value ? 'Starting...' : AppStrings.runScan),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.black,
-                      foregroundColor: AppColors.white,
-                    ),
+          Obx(() {
+            final items = controller.programs;
+            final value = controller.selectedProgramId.value;
+            final validIds =
+                items.map((p) => (p['program_id'] ?? '').toString()).toSet();
+            final displayValue =
+                value.isEmpty || !validIds.contains(value) ? '' : value;
+            final dropdownItems = <DropdownMenuItem<String>>[
+              const DropdownMenuItem<String>(
+                value: '',
+                child: Text(AppStrings.noProgram),
+              ),
+              ...items.map(
+                (p) => DropdownMenuItem<String>(
+                  value: (p['program_id'] ?? '').toString(),
+                  child: Text(
+                    (p['name'] ?? p['program_id'] ?? 'Program').toString(),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
-              const SizedBox(width: UIConstants.spacingM),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await Get.toNamed(Routes.createProgram);
-                  controller.fetchPrograms();
-                },
-                icon: const Icon(Icons.add),
-                label: const Text(AppStrings.createProgram),
+            ];
+            return DropdownButtonFormField<String>(
+              value: displayValue,
+              decoration: const InputDecoration(
+                labelText: AppStrings.selectProgram,
+                border: OutlineInputBorder(),
               ),
-            ],
+              items: dropdownItems,
+              onChanged: (v) {
+                if (v != null) controller.setActiveProgram(v);
+              },
+            );
+          }),
+          const SizedBox(height: UIConstants.spacingM),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await Get.toNamed(Routes.createProgram);
+              controller.fetchPrograms();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text(AppStrings.createProgram),
           ),
         ],
       ),
@@ -449,7 +393,8 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
     bool enabled,
   ) async {
     final ok = await controller.updateStrategy(id, {'enabled': enabled});
-    if (!ok && context.mounted) {
+    if (!context.mounted) return;
+    if (!ok) {
       UiFeedback.showSnackBar(
         context,
         message: AppStrings.strategyUpdateFailed,

@@ -15,12 +15,29 @@ class StockApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Stock App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(brightness: Brightness.light, colorScheme: ColorScheme.fromSeed(seedColor: AppColors.blue), useMaterial3: true),
-      darkTheme: ThemeData(brightness: Brightness.dark, colorScheme: ColorScheme.fromSeed(seedColor: AppColors.blue, brightness: Brightness.dark), useMaterial3: true),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.blue),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.blue,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
       themeMode: ThemeMode.light,
       initialRoute: Routes.home,
       getPages: getPages,
-      unknownRoute: GetPage(name: Routes.notFound, page: () => const Scaffold(body: Center(child: Text("404 - Page not found")))),
+      unknownRoute: GetPage(
+        name: Routes.notFound,
+        page:
+            () => const Scaffold(
+              body: Center(child: Text("404 - Page not found")),
+            ),
+      ),
     );
   }
 }

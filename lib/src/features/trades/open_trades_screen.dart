@@ -51,7 +51,10 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: Text(AppStrings.openTrades, style: const TextStyle(color: AppColors.white)),
+      title: Text(
+        AppStrings.openTrades,
+        style: const TextStyle(color: AppColors.white),
+      ),
       centerTitle: true,
       backgroundColor: AppColors.black,
       iconTheme: const IconThemeData(color: AppColors.white),
@@ -84,9 +87,18 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
       ),
       child: Obx(() {
         if (controller.isLoading.value && controller.currentPage.value == 1) {
-          return Text(AppStrings.loading, style: TextStyle(fontSize: UIConstants.fontL, color: AppColors.grey));
+          return Text(
+            AppStrings.loading,
+            style: TextStyle(
+              fontSize: UIConstants.fontL,
+              color: AppColors.grey,
+            ),
+          );
         }
-        return Text(controller.paginationInfo, style: TextStyle(fontSize: UIConstants.fontL, color: AppColors.grey));
+        return Text(
+          controller.paginationInfo,
+          style: TextStyle(fontSize: UIConstants.fontL, color: AppColors.grey),
+        );
       }),
     );
   }
@@ -113,7 +125,8 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
         color: AppColors.blue,
         child: ListView.builder(
           padding: AppPadding.allL,
-          itemCount: controller.allTrades.length + (controller.hasMoreData ? 1 : 0),
+          itemCount:
+              controller.allTrades.length + (controller.hasMoreData ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == controller.allTrades.length) {
               return _buildLoadMoreButton();
@@ -139,7 +152,10 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
         padding: AppPadding.allL,
         child: ElevatedButton(
           onPressed: controller.loadNextPage,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, foregroundColor: AppColors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.blue,
+            foregroundColor: AppColors.white,
+          ),
           child: Text(AppStrings.loadMore),
         ),
       );
@@ -156,13 +172,23 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
   }
 
   void _deleteOpenTrade(OpenTrade trade) async {
-    LoadingDialog.showWithContext(context, message: '${AppStrings.deleting} ${trade.symbol}...', progressColor: AppColors.error);
+    LoadingDialog.showWithContext(
+      context,
+      message: '${AppStrings.deleting} ${trade.symbol}...',
+      progressColor: AppColors.error,
+    );
     final success = await controller.deleteOpenTrade(trade.id);
     if (mounted) LoadingDialog.hideWithContext(context);
     if (mounted) {
       success
-          ? SnackbarHelper.showSimpleSuccess(context, message: '${trade.symbol} ${AppStrings.deletedSuccessfully}')
-          : SnackbarHelper.showSimpleError(context, message: AppStrings.failedToDeleteTrade);
+          ? SnackbarHelper.showSimpleSuccess(
+            context,
+            message: '${trade.symbol} ${AppStrings.deletedSuccessfully}',
+          )
+          : SnackbarHelper.showSimpleError(
+            context,
+            message: AppStrings.failedToDeleteTrade,
+          );
     }
   }
 
@@ -176,44 +202,87 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
   }
 
   void _updateOpenTrade(OpenTrade trade, String newExitDate) async {
-    LoadingDialog.showWithContext(context, message: '${AppStrings.updating} ${trade.symbol}...', progressColor: AppColors.blue);
-    final success = await controller.updateOpenTrade(tradeId: trade.id, exitDate: newExitDate);
+    LoadingDialog.showWithContext(
+      context,
+      message: '${AppStrings.updating} ${trade.symbol}...',
+      progressColor: AppColors.blue,
+    );
+    final success = await controller.updateOpenTrade(
+      tradeId: trade.id,
+      exitDate: newExitDate,
+    );
     if (mounted) LoadingDialog.hideWithContext(context);
     if (mounted) {
       success
-          ? SnackbarHelper.showSimpleSuccess(context, message: '${trade.symbol} ${AppStrings.updatedSuccessfully}')
-          : SnackbarHelper.showSimpleError(context, message: AppStrings.failedToUpdateTrade);
+          ? SnackbarHelper.showSimpleSuccess(
+            context,
+            message: '${trade.symbol} ${AppStrings.updatedSuccessfully}',
+          )
+          : SnackbarHelper.showSimpleError(
+            context,
+            message: AppStrings.failedToUpdateTrade,
+          );
     }
   }
 
   void _exportOpenTrades() async {
-    LoadingDialog.showWithContext(context, message: AppStrings.exportingTrades, progressColor: AppColors.blue);
+    LoadingDialog.showWithContext(
+      context,
+      message: AppStrings.exportingTrades,
+      progressColor: AppColors.blue,
+    );
     final result = await controller.exportOpenTrades();
     if (mounted) LoadingDialog.hideWithContext(context);
     if (mounted) {
       result['success'] == true
-          ? SnackbarHelper.showSimpleSuccess(context, message: '${result['message']}\n${AppStrings.savedTo} ${result['path']}')
-          : SnackbarHelper.showSimpleError(context, message: result['message'] ?? AppStrings.failedToExportTrades);
+          ? SnackbarHelper.showSimpleSuccess(
+            context,
+            message:
+                '${result['message']}\n${AppStrings.savedTo} ${result['path']}',
+          )
+          : SnackbarHelper.showSimpleError(
+            context,
+            message: result['message'] ?? AppStrings.failedToExportTrades,
+          );
     }
   }
 
   void _importOpenTrades() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json'], withData: true);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      withData: true,
+    );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
     if (file.bytes == null) {
-      if (mounted) SnackbarHelper.showSimpleError(context, message: AppStrings.failedToReadFile);
+      if (mounted)
+        SnackbarHelper.showSimpleError(
+          context,
+          message: AppStrings.failedToReadFile,
+        );
       return;
     }
     final jsonString = utf8.decode(file.bytes!);
     final jsonData = json.decode(jsonString) as Map<String, dynamic>;
-    LoadingDialog.showWithContext(context, message: AppStrings.importingTrades, progressColor: AppColors.blue);
+    LoadingDialog.showWithContext(
+      context,
+      message: AppStrings.importingTrades,
+      progressColor: AppColors.blue,
+    );
     final result2 = await controller.importTradesFromJson(jsonData);
     if (mounted) LoadingDialog.hideWithContext(context);
     if (mounted) {
       result2['success'] == true
-          ? SnackbarHelper.showSimpleSuccess(context, message: '${result2['message']} (${result2['count']} ${AppStrings.trades})')
-          : SnackbarHelper.showSimpleError(context, message: result2['message'] ?? AppStrings.failedToImportTrades);
+          ? SnackbarHelper.showSimpleSuccess(
+            context,
+            message:
+                '${result2['message']} (${result2['count']} ${AppStrings.trades})',
+          )
+          : SnackbarHelper.showSimpleError(
+            context,
+            message: result2['message'] ?? AppStrings.failedToImportTrades,
+          );
     }
   }
 }

@@ -33,9 +33,7 @@ class SettingsResponse {
 class SettingsData {
   final double portfolioSize;
 
-  SettingsData({
-    required this.portfolioSize,
-  });
+  SettingsData({required this.portfolioSize});
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     return SettingsData(
@@ -44,8 +42,6 @@ class SettingsData {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'portfolio_size': portfolioSize,
-    };
+    return {'portfolio_size': portfolioSize};
   }
 }

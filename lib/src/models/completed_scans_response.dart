@@ -16,9 +16,13 @@ class CompletedScansResponse {
       success: json['success'] ?? false,
       status: json['status'] ?? 0,
       message: json['message'] ?? '',
-      data: (json['data'] as List<dynamic>? ?? [])
-          .map((item) => CompletedScanData.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      data:
+          (json['data'] as List<dynamic>? ?? [])
+              .map(
+                (item) =>
+                    CompletedScanData.fromJson(item as Map<String, dynamic>),
+              )
+              .toList(),
     );
   }
 }
@@ -27,10 +31,7 @@ class CompletedScanData {
   final int id;
   final String createdAt;
 
-  CompletedScanData({
-    required this.id,
-    required this.createdAt,
-  });
+  CompletedScanData({required this.id, required this.createdAt});
 
   factory CompletedScanData.fromJson(Map<String, dynamic> json) {
     return CompletedScanData(

@@ -51,7 +51,8 @@ class ClosedTradesData {
 
   factory ClosedTradesData.fromJson(Map<String, dynamic> json) {
     return ClosedTradesData(
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((item) => ClosedTrade.fromJson(item))
               .toList() ??
           [],

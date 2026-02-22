@@ -45,12 +45,24 @@ class _EditActiveTradeDialogState extends State<EditActiveTradeDialog> {
   void initState() {
     super.initState();
     symbolController = TextEditingController(text: widget.trade.symbol);
-    recommendationController = TextEditingController(text: widget.trade.recommendation);
-    entryPriceController = TextEditingController(text: widget.trade.entryPrice.toString());
-    stopLossController = TextEditingController(text: widget.trade.stopLoss.toString());
-    takeProfitController = TextEditingController(text: widget.trade.takeProfit.toString());
-    positionSizeController = TextEditingController(text: widget.trade.positionSize.toString());
-    riskRewardController = TextEditingController(text: widget.trade.riskRewardRatio.toString());
+    recommendationController = TextEditingController(
+      text: widget.trade.recommendation,
+    );
+    entryPriceController = TextEditingController(
+      text: widget.trade.entryPrice.toString(),
+    );
+    stopLossController = TextEditingController(
+      text: widget.trade.stopLoss.toString(),
+    );
+    takeProfitController = TextEditingController(
+      text: widget.trade.takeProfit.toString(),
+    );
+    positionSizeController = TextEditingController(
+      text: widget.trade.positionSize.toString(),
+    );
+    riskRewardController = TextEditingController(
+      text: widget.trade.riskRewardRatio.toString(),
+    );
     strategyController = TextEditingController(text: widget.trade.strategy);
     exitDateController = TextEditingController(text: widget.trade.exitDate);
     try {
@@ -85,12 +97,35 @@ class _EditActiveTradeDialogState extends State<EditActiveTradeDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildTextField(symbolController, AppStrings.symbol),
-              _buildTextField(recommendationController, AppStrings.recommendation),
-              _buildTextField(entryPriceController, AppStrings.entryPrice, isNumber: true),
-              _buildTextField(stopLossController, AppStrings.stopLoss, isNumber: true),
-              _buildTextField(takeProfitController, AppStrings.takeProfit, isNumber: true),
-              _buildTextField(positionSizeController, AppStrings.positionSize, isNumber: true),
-              _buildTextField(riskRewardController, AppStrings.riskRewardRatio, isNumber: true),
+              _buildTextField(
+                recommendationController,
+                AppStrings.recommendation,
+              ),
+              _buildTextField(
+                entryPriceController,
+                AppStrings.entryPrice,
+                isNumber: true,
+              ),
+              _buildTextField(
+                stopLossController,
+                AppStrings.stopLoss,
+                isNumber: true,
+              ),
+              _buildTextField(
+                takeProfitController,
+                AppStrings.takeProfit,
+                isNumber: true,
+              ),
+              _buildTextField(
+                positionSizeController,
+                AppStrings.positionSize,
+                isNumber: true,
+              ),
+              _buildTextField(
+                riskRewardController,
+                AppStrings.riskRewardRatio,
+                isNumber: true,
+              ),
               _buildTextField(strategyController, AppStrings.strategy),
               _buildDateField(),
             ],
@@ -114,12 +149,19 @@ class _EditActiveTradeDialogState extends State<EditActiveTradeDialog> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, {bool isNumber = false}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    bool isNumber = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: UIConstants.paddingM),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       ),
     );

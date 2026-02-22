@@ -50,14 +50,20 @@ class _PaginationInfo extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(
-          bottom: BorderSide(color: AppColors.grey, width: UIConstants.borderWidthThin),
+          bottom: BorderSide(
+            color: AppColors.grey,
+            width: UIConstants.borderWidthThin,
+          ),
         ),
       ),
       child: Obx(() {
         if (controller.isInitialLoading.value) {
           return Text(
             AppStrings.loading,
-            style: TextStyle(fontSize: UIConstants.fontL, color: AppColors.grey),
+            style: TextStyle(
+              fontSize: UIConstants.fontL,
+              color: AppColors.grey,
+            ),
           );
         }
         return Text(
@@ -82,9 +88,7 @@ class _ScansList extends StatelessWidget {
         return const LoadingWidget(color: AppColors.black);
       }
       if (controller.scanHistory.isEmpty) {
-        return const EmptyStateWidget(
-          title: AppStrings.tapToScanStocks,
-        );
+        return const EmptyStateWidget(title: AppStrings.tapToScanStocks);
       }
       return RefreshIndicator(
         onRefresh: () async => section.onRefresh(),
@@ -93,10 +97,14 @@ class _ScansList extends StatelessWidget {
           controller: section.scrollController,
           padding: AppPadding.allL,
           itemCount:
-              controller.scanHistory.length + (controller.hasMoreDataToLoad ? 1 : 0),
+              controller.scanHistory.length +
+              (controller.hasMoreDataToLoad ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == controller.scanHistory.length) {
-              return _LoadMoreButton(controller: controller, onPressed: section.onLoadMore);
+              return _LoadMoreButton(
+                controller: controller,
+                onPressed: section.onLoadMore,
+              );
             }
             final scan = controller.scanHistory[index];
             return Padding(

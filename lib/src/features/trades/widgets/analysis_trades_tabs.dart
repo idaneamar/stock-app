@@ -59,7 +59,8 @@ class _TradesTab extends StatelessWidget {
       child: ListView.separated(
         padding: AppPadding.allL,
         itemCount: trades.length,
-        separatorBuilder: (_, __) => const SizedBox(height: UIConstants.spacingM),
+        separatorBuilder:
+            (_, __) => const SizedBox(height: UIConstants.spacingM),
         itemBuilder: (context, index) {
           final trade = trades[index];
           return AnalysisTradeCard(

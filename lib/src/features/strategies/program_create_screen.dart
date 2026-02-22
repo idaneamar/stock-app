@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/features/strategies/strategies_controller.dart';
@@ -45,6 +47,7 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
     try {
       final response = await _api.createProgram({
         'name': name,
+        'ignore_vix': false,
       });
       if (response.statusCode == 201 || response.statusCode == 200) {
         await controller.fetchPrograms();
@@ -57,7 +60,12 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
         Navigator.of(context).pop(true);
         return;
       }
-    } catch (_) {}
+      log(
+        'Create program failed: status=${response.statusCode} data=${response.data}',
+      );
+    } catch (e, st) {
+      log('Create program error: $e', stackTrace: st);
+    }
     if (!mounted) return;
     setState(() {
       _isSaving = false;
@@ -101,6 +109,7 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
               AppTextField(
                 label: AppStrings.programName,
                 controller: _nameController,
+                keyboardType: TextInputType.text,
               ),
               const SizedBox(height: UIConstants.spacingXXXL),
               ElevatedButton(
@@ -108,18 +117,21 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.blue,
                   foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: UIConstants.paddingL),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: UIConstants.paddingL,
+                  ),
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.white,
-                        ),
-                      )
-                    : const Text(AppStrings.save),
+                child:
+                    _isSaving
+                        ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
+                        : const Text(AppStrings.save),
               ),
             ],
           ),

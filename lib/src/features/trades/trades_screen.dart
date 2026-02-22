@@ -60,40 +60,46 @@ class _TradesScreenState extends State<TradesScreen> {
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: UIConstants.paddingM),
-                child: controller.isDownloading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(AppColors.white),
-                        ),
-                      )
-                    : TextButton.icon(
-                        onPressed: controller.isBusy
-                            ? null
-                            : () => controller.downloadExcel(context),
-                        icon: const Icon(
-                          Icons.download,
-                          color: AppColors.white,
-                          size: 16,
-                        ),
-                        label: const Text(
-                          AppStrings.downloadExcel,
-                          style: TextStyle(color: AppColors.white, fontSize: 12),
-                        ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppColors.success,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                child:
+                    controller.isDownloading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(AppColors.white),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(UIConstants.radiusS),
+                        )
+                        : TextButton.icon(
+                          onPressed:
+                              controller.isBusy
+                                  ? null
+                                  : () => controller.downloadExcel(context),
+                          icon: const Icon(
+                            Icons.download,
+                            color: AppColors.white,
+                            size: 16,
+                          ),
+                          label: const Text(
+                            AppStrings.downloadExcel,
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                UIConstants.radiusS,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
               ),
             ],
           ),
@@ -107,17 +113,18 @@ class _TradesScreenState extends State<TradesScreen> {
                   totalInvestment: controller.totalInvestment(data.analysis),
                 ),
                 Expanded(
-                  child: controller.errorMessage.isNotEmpty
-                      ? ErrorStateWidget(
-                          errorMessage: controller.errorMessage,
-                          onRetry: controller.refresh,
-                        )
-                      : AnalysisTradesTabs(
-                          trades: data.analysis,
-                          onRefresh: controller.refresh,
-                          onEdit: _editTrade,
-                          onDelete: _confirmDeleteTrade,
-                        ),
+                  child:
+                      controller.errorMessage.isNotEmpty
+                          ? ErrorStateWidget(
+                            errorMessage: controller.errorMessage,
+                            onRetry: controller.refresh,
+                          )
+                          : AnalysisTradesTabs(
+                            trades: data.analysis,
+                            onRefresh: controller.refresh,
+                            onEdit: _editTrade,
+                            onDelete: _confirmDeleteTrade,
+                          ),
                 ),
               ],
             ),
@@ -125,21 +132,23 @@ class _TradesScreenState extends State<TradesScreen> {
           floatingActionButton: FloatingActionButton(
             onPressed: controller.isBusy ? null : controller.refresh,
             backgroundColor: AppColors.black,
-            child: controller.isBusy
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(AppColors.white),
-                    ),
-                  )
-                : const Icon(Icons.refresh, color: AppColors.white),
+            child:
+                controller.isBusy
+                    ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(AppColors.white),
+                      ),
+                    )
+                    : const Icon(Icons.refresh, color: AppColors.white),
           ),
         );
       },
     );
   }
+
   Future<void> _editTrade(Trade trade) async {
     final updates = await EditAnalysisTradeDialog.show(context, trade: trade);
     if (updates != null) await controller.updateTrade(context, updates);

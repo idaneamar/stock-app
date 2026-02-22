@@ -30,4 +30,3 @@ class OrderPrepareInfoItem extends StatelessWidget {
     );
   }
 }
-

@@ -227,9 +227,10 @@ class HomeController extends GetxController {
       errorMessage.value = '';
       final ignoreVix = !(await SharedPrefsService.getUseVixFilter());
       final activeProgramId = await SharedPrefsService.getActiveProgramId();
-      final programId = selectedProgramId.value.isEmpty
-          ? (activeProgramId.isEmpty ? null : activeProgramId)
-          : selectedProgramId.value;
+      final programId =
+          selectedProgramId.value.isEmpty
+              ? (activeProgramId.isEmpty ? null : activeProgramId)
+              : selectedProgramId.value;
 
       final response = await _apiService.scanStocks(
         maxMarketCap: (double.tryParse(maxMarketCapCtrl.text) ?? 0) * 1000000,

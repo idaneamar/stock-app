@@ -55,12 +55,12 @@ class ApiClient {
 
   /// Excel response options
   Options get excelOptions => Options(
-        responseType: ResponseType.bytes,
-        headers: {
-          'Accept':
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        },
-      );
+    responseType: ResponseType.bytes,
+    headers: {
+      'Accept':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+  );
 
   /// Handles API errors and throws formatted exceptions
   Exception handleError(DioException e) {

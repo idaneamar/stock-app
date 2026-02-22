@@ -24,7 +24,9 @@ class PortfolioSizeEditDialog {
             children: [
               TextField(
                 controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: AppStrings.portfolioSize,
                   prefixText: '\$',

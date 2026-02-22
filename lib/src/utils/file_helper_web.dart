@@ -17,8 +17,8 @@ class FileHelper {
       final blob = html.Blob(<Object>[Uint8List.fromList(bytes)]);
       final url = html.Url.createObjectUrlFromBlob(blob);
 
-      final anchor =
-          html.AnchorElement(href: url)..setAttribute('download', fileName);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', fileName);
       html.document.body?.append(anchor);
       anchor.click();
       anchor.remove();

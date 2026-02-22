@@ -253,16 +253,14 @@ class _StrategyEditorDialogState extends State<_StrategyEditorDialog> {
       switch (rule.rhsType) {
         case _RhsType.value:
           final raw = rule.valueController.text.trim();
-          if (raw.isEmpty) return null;
-          final lower = raw.toLowerCase();
+          final lower = raw.isEmpty ? '' : raw.toLowerCase();
           if (lower == 'true') {
             base['value'] = true;
           } else if (lower == 'false') {
             base['value'] = false;
           } else {
             final parsed = double.tryParse(raw);
-            if (parsed == null) return null;
-            base['value'] = parsed;
+            base['value'] = parsed ?? 0;
           }
           break;
         case _RhsType.compareTo:
@@ -379,14 +377,16 @@ class _StrategyEditorDialogState extends State<_StrategyEditorDialog> {
     );
     final minRR = double.tryParse(_minRiskRewardController.text.trim());
 
-    if (stopLoss == null || takeProfit == null || minRR == null) return null;
+    final effectiveStopLoss = stopLoss ?? 2.0;
+    final effectiveTakeProfit = takeProfit ?? 4.0;
+    final effectiveMinRR = minRR ?? 1.5;
 
     final config = <String, dynamic>{
       'buy_rules': buyRules,
       'risk': <String, dynamic>{
-        'stop_loss_atr_mult': stopLoss,
-        'take_profit_atr_mult': takeProfit,
-        'min_risk_reward': minRR,
+        'stop_loss_atr_mult': effectiveStopLoss,
+        'take_profit_atr_mult': effectiveTakeProfit,
+        'min_risk_reward': effectiveMinRR,
       },
     };
     if (preFilters.isNotEmpty) {

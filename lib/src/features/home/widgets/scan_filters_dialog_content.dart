@@ -19,38 +19,38 @@ class ScanFiltersDialogContent extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Obx(
-              () {
-                final items = controller.programs;
-                final value = controller.selectedProgramId.value;
-                final displayValue = value.isNotEmpty
-                    ? value
-                    : (items.isNotEmpty
-                        ? (items.first['program_id'] ?? '').toString()
-                        : null);
-                return DropdownButtonFormField<String>(
-                  value: displayValue,
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.program,
-                    border: OutlineInputBorder(),
-                  ),
-                  items: items
-                      .map(
-                        (p) => DropdownMenuItem<String>(
-                          value: (p['program_id'] ?? '').toString(),
-                          child: Text(
-                            (p['name'] ?? p['program_id'] ?? '').toString(),
-                            overflow: TextOverflow.ellipsis,
+            Obx(() {
+              final items = controller.programs;
+              final value = controller.selectedProgramId.value;
+              final displayValue =
+                  value.isNotEmpty
+                      ? value
+                      : (items.isNotEmpty
+                          ? (items.first['program_id'] ?? '').toString()
+                          : null);
+              return DropdownButtonFormField<String>(
+                value: displayValue,
+                decoration: const InputDecoration(
+                  labelText: AppStrings.program,
+                  border: OutlineInputBorder(),
+                ),
+                items:
+                    items
+                        .map(
+                          (p) => DropdownMenuItem<String>(
+                            value: (p['program_id'] ?? '').toString(),
+                            child: Text(
+                              (p['name'] ?? p['program_id'] ?? '').toString(),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) controller.selectedProgramId.value = v;
-                  },
-                );
-              },
-            ),
+                        )
+                        .toList(),
+                onChanged: (v) {
+                  if (v != null) controller.selectedProgramId.value = v;
+                },
+              );
+            }),
             const SizedBox(height: UIConstants.spacingM),
             AppTextField(
               label: AppStrings.minMarketCap,
@@ -108,8 +108,8 @@ class ScanFiltersDialogContent extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: const Text(AppStrings.volumeSpikeRequired),
                 value: controller.volumeSpikeRequired.value,
-                onChanged: (value) =>
-                    controller.volumeSpikeRequired.value = value,
+                onChanged:
+                    (value) => controller.volumeSpikeRequired.value = value,
               ),
             ),
             const SizedBox(height: UIConstants.spacingS),
@@ -118,8 +118,8 @@ class ScanFiltersDialogContent extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: const Text(AppStrings.allowIntradayPrices),
                 value: controller.allowIntradayPrices.value,
-                onChanged: (value) =>
-                    controller.allowIntradayPrices.value = value,
+                onChanged:
+                    (value) => controller.allowIntradayPrices.value = value,
               ),
             ),
             const SizedBox(height: UIConstants.spacingM),

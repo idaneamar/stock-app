@@ -39,7 +39,10 @@ class DateFilterWidget extends StatelessWidget {
           const SizedBox(height: UIConstants.spacingL),
           Text(
             dateRangeText,
-            style: TextStyle(fontSize: UIConstants.fontL, color: AppColors.grey600),
+            style: TextStyle(
+              fontSize: UIConstants.fontL,
+              color: AppColors.grey600,
+            ),
           ),
           const SizedBox(height: UIConstants.spacingL),
           _buildButtons(),
@@ -51,7 +54,11 @@ class DateFilterWidget extends StatelessWidget {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Icon(Icons.date_range, color: AppColors.blue, size: UIConstants.iconM),
+        const Icon(
+          Icons.date_range,
+          color: AppColors.blue,
+          size: UIConstants.iconM,
+        ),
         const SizedBox(width: UIConstants.spacingM),
         Text(
           AppStrings.dateFilter,
@@ -67,7 +74,10 @@ class DateFilterWidget extends StatelessWidget {
             onPressed: onClear,
             child: Text(
               AppStrings.clear,
-              style: TextStyle(color: AppColors.error, fontSize: UIConstants.fontM),
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: UIConstants.fontM,
+              ),
             ),
           ),
       ],

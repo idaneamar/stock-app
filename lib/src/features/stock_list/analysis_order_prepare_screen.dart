@@ -18,7 +18,8 @@ class AnalysisOrderPrepareScreen extends StatefulWidget {
       _AnalysisOrderPrepareScreenState();
 }
 
-class _AnalysisOrderPrepareScreenState extends State<AnalysisOrderPrepareScreen> {
+class _AnalysisOrderPrepareScreenState
+    extends State<AnalysisOrderPrepareScreen> {
   late final OrderPrepareController controller;
 
   @override
@@ -58,13 +59,14 @@ class _AnalysisOrderPrepareScreenState extends State<AnalysisOrderPrepareScreen>
           body: Container(
             color: AppColors.grey50,
             padding: AppPadding.allL,
-            child: controller.isLoading
-                ? const LoadingWidget(color: AppColors.black)
-                : controller.error.isNotEmpty
+            child:
+                controller.isLoading
+                    ? const LoadingWidget(color: AppColors.black)
+                    : controller.error.isNotEmpty
                     ? ErrorStateWidget(
-                        errorMessage: controller.error,
-                        onRetry: controller.load,
-                      )
+                      errorMessage: controller.error,
+                      onRetry: controller.load,
+                    )
                     : _Content(controller: controller),
           ),
         );

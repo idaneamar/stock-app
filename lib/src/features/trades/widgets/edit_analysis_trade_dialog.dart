@@ -20,7 +20,8 @@ class EditAnalysisTradeDialog extends StatefulWidget {
   }
 
   @override
-  State<EditAnalysisTradeDialog> createState() => _EditAnalysisTradeDialogState();
+  State<EditAnalysisTradeDialog> createState() =>
+      _EditAnalysisTradeDialogState();
 }
 
 class _EditAnalysisTradeDialogState extends State<EditAnalysisTradeDialog> {
@@ -31,10 +32,12 @@ class _EditAnalysisTradeDialogState extends State<EditAnalysisTradeDialog> {
   @override
   void initState() {
     super.initState();
-    positionSizeController =
-        TextEditingController(text: widget.trade.positionSize.toString());
+    positionSizeController = TextEditingController(
+      text: widget.trade.positionSize.toString(),
+    );
     exitDateController = TextEditingController(text: widget.trade.exitDate);
-    selectedExitDate = DateTime.tryParse(widget.trade.exitDate) ?? DateTime.now();
+    selectedExitDate =
+        DateTime.tryParse(widget.trade.exitDate) ?? DateTime.now();
   }
 
   @override
@@ -123,4 +126,3 @@ class _EditAnalysisTradeDialogState extends State<EditAnalysisTradeDialog> {
     });
   }
 }
-

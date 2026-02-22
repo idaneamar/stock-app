@@ -60,9 +60,7 @@ class _AnalysisExcelLoaderScreenState extends State<AnalysisExcelLoaderScreen> {
           return;
         }
 
-        Get.off(
-          () => RobustExcelViewer(excelData: bytes, title: widget.title),
-        );
+        Get.off(() => RobustExcelViewer(excelData: bytes, title: widget.title));
         return;
       }
 

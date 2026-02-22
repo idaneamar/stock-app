@@ -23,7 +23,7 @@ class SettingsController extends GetxController {
   final RxBool useVixFilter = true.obs;
 
   SettingsController({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   @override
   void onInit() {
@@ -69,7 +69,9 @@ class SettingsController extends GetxController {
     isUpdating.value = true;
     try {
       log('Updating settings - Portfolio Size: $portfolioSize');
-      final response = await _apiService.updateSettings(portfolioSize: portfolioSize);
+      final response = await _apiService.updateSettings(
+        portfolioSize: portfolioSize,
+      );
       if (context != null && !context.mounted) return;
       if (response.statusCode == 200 && response.data['success'] == true) {
         settings.value = SettingsResponse.fromJson(response.data).data;
@@ -81,7 +83,9 @@ class SettingsController extends GetxController {
       } else {
         UiFeedback.showSnackBar(
           context,
-          message: response.data['message'] ?? SettingsStrings.failedToUpdateSettings,
+          message:
+              response.data['message'] ??
+              SettingsStrings.failedToUpdateSettings,
           type: UiMessageType.error,
         );
       }

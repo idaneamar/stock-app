@@ -36,9 +36,11 @@ class ScanHistoryResponse {
 
     if (responseData is Map<String, dynamic>) {
       // New paginated format
-      items = (responseData['items'] as List<dynamic>?)
-          ?.map((item) => ScanHistoryData.fromJson(item))
-          .toList() ?? [];
+      items =
+          (responseData['items'] as List<dynamic>?)
+              ?.map((item) => ScanHistoryData.fromJson(item))
+              .toList() ??
+          [];
       total = responseData['total'] ?? items.length;
       page = responseData['page'] ?? 1;
       pageSize = responseData['page_size'] ?? 10;
@@ -47,9 +49,8 @@ class ScanHistoryResponse {
       hasPrevious = responseData['has_previous'] ?? false;
     } else if (responseData is List<dynamic>) {
       // Old format (direct array)
-      items = responseData
-          .map((item) => ScanHistoryData.fromJson(item))
-          .toList();
+      items =
+          responseData.map((item) => ScanHistoryData.fromJson(item)).toList();
       total = items.length;
     } else {
       items = [];
@@ -132,13 +133,18 @@ class ScanHistoryData {
     final analysisStatus =
         (json['analysis_status'] ?? '').toString().isNotEmpty
             ? (json['analysis_status'] ?? '').toString()
-            : (json['full_analysis_status'] ?? json['limited_analysis_status'] ?? '')
+            : (json['full_analysis_status'] ??
+                    json['limited_analysis_status'] ??
+                    '')
                 .toString();
 
     final analysisProgress =
         (json['analysis_progress'] is int)
             ? (json['analysis_progress'] as int)
-            : _maxInt(json['full_analysis_progress'], json['limited_analysis_progress']);
+            : _maxInt(
+              json['full_analysis_progress'],
+              json['limited_analysis_progress'],
+            );
 
     final analyzedAt =
         (json['analyzed_at'] ??
@@ -153,7 +159,8 @@ class ScanHistoryData {
       scanProgress: json['scan_progress'] ?? 0,
       analysisStatus: analysisStatus,
       analysisProgress: analysisProgress,
-      fullAnalysisStatus: (json['full_analysis_status'] ?? analysisStatus).toString(),
+      fullAnalysisStatus:
+          (json['full_analysis_status'] ?? analysisStatus).toString(),
       fullAnalysisProgress:
           (json['full_analysis_progress'] is int)
               ? json['full_analysis_progress']
@@ -165,16 +172,18 @@ class ScanHistoryData {
               ? json['limited_analysis_progress']
               : analysisProgress,
       criteria: ScanHistoryCriteria.fromJson(json['criteria'] ?? {}),
-      stockSymbols: (json['stock_symbols'] as List<dynamic>? ?? [])
-          .map((item) => StockSymbol.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      stockSymbols:
+          (json['stock_symbols'] as List<dynamic>? ?? [])
+              .map((item) => StockSymbol.fromJson(item as Map<String, dynamic>))
+              .toList(),
       totalFound: json['total_found'] ?? 0,
       errorMessage: json['error_message'],
       createdAt: json['created_at'] ?? '',
       completedAt: json['completed_at'],
       analyzedAt: analyzedAt,
       fullAnalyzedAt: (json['full_analyzed_at'] ?? analyzedAt)?.toString(),
-      limitedAnalyzedAt: (json['limited_analyzed_at'] ?? analyzedAt)?.toString(),
+      limitedAnalyzedAt:
+          (json['limited_analyzed_at'] ?? analyzedAt)?.toString(),
     );
   }
 

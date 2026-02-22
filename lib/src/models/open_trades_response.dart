@@ -51,7 +51,8 @@ class OpenTradesData {
 
   factory OpenTradesData.fromJson(Map<String, dynamic> json) {
     return OpenTradesData(
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((item) => OpenTrade.fromJson(item))
               .toList() ??
           [],

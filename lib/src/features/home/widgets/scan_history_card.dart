@@ -61,7 +61,10 @@ class ScanHistoryCard extends StatelessWidget {
       elevation: UIConstants.elevationM,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        side: BorderSide(color: _borderColor, width: UIConstants.borderWidthThick),
+        side: BorderSide(
+          color: _borderColor,
+          width: UIConstants.borderWidthThick,
+        ),
       ),
       child: GestureDetector(
         onLongPress: _isInProgress ? null : onLongPress,
@@ -77,8 +80,10 @@ class ScanHistoryCard extends StatelessWidget {
                 const SizedBox(height: UIConstants.spacingL),
                 _buildDateAndStocks(),
                 if (scanProgress != null) _buildProgressBar(),
-                if (_isCompleted && scan.stockSymbols.isNotEmpty) _buildStockSymbols(),
-                if (_isFailed && scan.errorMessage != null) _buildErrorMessage(),
+                if (_isCompleted && scan.stockSymbols.isNotEmpty)
+                  _buildStockSymbols(),
+                if (_isFailed && scan.errorMessage != null)
+                  _buildErrorMessage(),
                 if (_isCompleted) _buildTapToViewHint(),
               ],
             ),
@@ -95,7 +100,10 @@ class ScanHistoryCard extends StatelessWidget {
         const SizedBox(width: UIConstants.spacingM),
         Text(
           'Scan #${scan.id}',
-          style: const TextStyle(fontSize: UIConstants.fontXL, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: UIConstants.fontXL,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const Spacer(),
         Container(
@@ -121,15 +129,33 @@ class ScanHistoryCard extends StatelessWidget {
   Widget _buildDateAndStocks() {
     return Row(
       children: [
-        Icon(Icons.calendar_today, size: UIConstants.iconXS, color: AppColors.grey600),
+        Icon(
+          Icons.calendar_today,
+          size: UIConstants.iconXS,
+          color: AppColors.grey600,
+        ),
         const SizedBox(width: UIConstants.spacingS),
-        Text(_formattedDate, style: TextStyle(fontSize: UIConstants.fontM, color: AppColors.grey600)),
+        Text(
+          _formattedDate,
+          style: TextStyle(
+            fontSize: UIConstants.fontM,
+            color: AppColors.grey600,
+          ),
+        ),
         const Spacer(),
-        Icon(Icons.trending_up, size: UIConstants.iconXS, color: AppColors.grey600),
+        Icon(
+          Icons.trending_up,
+          size: UIConstants.iconXS,
+          color: AppColors.grey600,
+        ),
         const SizedBox(width: UIConstants.spacingS),
         Text(
           '${scan.totalFound} stocks found',
-          style: TextStyle(fontSize: UIConstants.fontM, color: AppColors.grey600, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: UIConstants.fontM,
+            color: AppColors.grey600,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -145,7 +171,11 @@ class ScanHistoryCard extends StatelessWidget {
             const SizedBox(width: UIConstants.spacingS),
             Text(
               'Scanning: $scanProgress%',
-              style: TextStyle(fontSize: UIConstants.fontM, color: AppColors.blue700, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: UIConstants.fontM,
+                color: AppColors.blue700,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -166,29 +196,47 @@ class ScanHistoryCard extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingL),
         const Text(
           'Stock Symbols:',
-          style: TextStyle(fontSize: UIConstants.fontM, fontWeight: FontWeight.w600, color: AppColors.black87),
+          style: TextStyle(
+            fontSize: UIConstants.fontM,
+            fontWeight: FontWeight.w600,
+            color: AppColors.black87,
+          ),
         ),
         const SizedBox(height: UIConstants.spacingS),
         Wrap(
           spacing: UIConstants.spacingS,
           runSpacing: UIConstants.spacingS,
-          children: scan.stockSymbols.take(10).map<Widget>((symbol) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: UIConstants.paddingS, vertical: UIConstants.paddingXS),
-              decoration: BoxDecoration(
-                color: AppColors.black.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(UIConstants.radiusS),
-              ),
-              child: Text(symbol.ticker, style: const TextStyle(fontSize: UIConstants.fontS, fontWeight: FontWeight.w500)),
-            );
-          }).toList(),
+          children:
+              scan.stockSymbols.take(10).map<Widget>((symbol) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.paddingS,
+                    vertical: UIConstants.paddingXS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.black.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(UIConstants.radiusS),
+                  ),
+                  child: Text(
+                    symbol.ticker,
+                    style: const TextStyle(
+                      fontSize: UIConstants.fontS,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
         if (scan.stockSymbols.length > 10)
           Padding(
             padding: const EdgeInsets.only(top: UIConstants.paddingXS),
             child: Text(
               '...and ${scan.stockSymbols.length - 10} more',
-              style: TextStyle(fontSize: UIConstants.fontS, color: AppColors.grey600, fontStyle: FontStyle.italic),
+              style: TextStyle(
+                fontSize: UIConstants.fontS,
+                color: AppColors.grey600,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
       ],
@@ -206,10 +254,20 @@ class ScanHistoryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: UIConstants.iconS),
+          const Icon(
+            Icons.error_outline,
+            color: AppColors.error,
+            size: UIConstants.iconS,
+          ),
           const SizedBox(width: UIConstants.spacingS),
           Expanded(
-            child: Text(scan.errorMessage!, style: const TextStyle(fontSize: UIConstants.fontM, color: AppColors.error)),
+            child: Text(
+              scan.errorMessage!,
+              style: const TextStyle(
+                fontSize: UIConstants.fontM,
+                color: AppColors.error,
+              ),
+            ),
           ),
         ],
       ),
@@ -228,11 +286,19 @@ class ScanHistoryCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.touch_app, color: AppColors.blue, size: UIConstants.iconXS),
+          const Icon(
+            Icons.touch_app,
+            color: AppColors.blue,
+            size: UIConstants.iconXS,
+          ),
           const SizedBox(width: UIConstants.spacingS),
           Text(
             'Tap to view stocks',
-            style: TextStyle(fontSize: UIConstants.fontS, color: AppColors.blue700, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: UIConstants.fontS,
+              color: AppColors.blue700,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

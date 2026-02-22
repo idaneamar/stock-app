@@ -6,10 +6,7 @@ import 'package:stock_app/src/utils/constants/ui_constants.dart';
 class ConnectionIndicator extends StatelessWidget {
   final bool isConnected;
 
-  const ConnectionIndicator({
-    super.key,
-    required this.isConnected,
-  });
+  const ConnectionIndicator({super.key, required this.isConnected});
 
   @override
   Widget build(BuildContext context) {

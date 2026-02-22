@@ -37,7 +37,9 @@ class OpenTradesController extends GetxController {
 
       error.value = '';
 
-      log('Fetching open trades - page: ${currentPage.value}, pageSize: ${pageSize.value}');
+      log(
+        'Fetching open trades - page: ${currentPage.value}, pageSize: ${pageSize.value}',
+      );
 
       final response = await _apiService.getOpenTrades(
         page: currentPage.value,
@@ -54,7 +56,9 @@ class OpenTradesController extends GetxController {
           allTrades.addAll(openTradesResponse.data.items);
         }
 
-        log('Fetched ${openTradesResponse.data.items.length} open trades (page ${openTradesResponse.data.page} of ${openTradesResponse.data.totalPages})');
+        log(
+          'Fetched ${openTradesResponse.data.items.length} open trades (page ${openTradesResponse.data.page} of ${openTradesResponse.data.totalPages})',
+        );
       } else {
         error.value = 'Failed to fetch open trades: ${response.statusMessage}';
       }
@@ -126,7 +130,9 @@ class OpenTradesController extends GetxController {
         log('Successfully deleted open trade with ID: $tradeId');
         return true;
       } else {
-        log('Failed to delete open trade with ID: $tradeId - Status: ${response.statusCode}');
+        log(
+          'Failed to delete open trade with ID: $tradeId - Status: ${response.statusCode}',
+        );
         return false;
       }
     } catch (e) {
@@ -172,7 +178,9 @@ class OpenTradesController extends GetxController {
         log('Successfully updated open trade with ID: $tradeId');
         return true;
       } else {
-        log('Failed to update open trade with ID: $tradeId - Status: ${response.statusCode}');
+        log(
+          'Failed to update open trade with ID: $tradeId - Status: ${response.statusCode}',
+        );
         return false;
       }
     } catch (e) {
@@ -209,10 +217,7 @@ class OpenTradesController extends GetxController {
       }
     } catch (e) {
       log('Error importing open trades - Error: $e');
-      return {
-        'success': false,
-        'message': 'Error importing trades: $e',
-      };
+      return {'success': false, 'message': 'Error importing trades: $e'};
     }
   }
 
@@ -251,10 +256,7 @@ class OpenTradesController extends GetxController {
       }
     } catch (e) {
       log('Error exporting open trades - Error: $e');
-      return {
-        'success': false,
-        'message': 'Error exporting trades: $e',
-      };
+      return {'success': false, 'message': 'Error exporting trades: $e'};
     }
   }
 }

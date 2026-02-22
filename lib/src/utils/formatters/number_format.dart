@@ -1,7 +1,4 @@
-String formatNumberWithCommas(
-  num value, {
-  int fractionDigits = 0,
-}) {
+String formatNumberWithCommas(num value, {int fractionDigits = 0}) {
   final isNegative = value < 0;
   final absValue = value.abs();
   final fixed = absValue.toStringAsFixed(fractionDigits);
@@ -17,14 +14,10 @@ String formatNumberWithCommas(
   return '${isNegative ? '-' : ''}$withCommas$decimalPart';
 }
 
-String formatUsd(
-  num value, {
-  int fractionDigits = 0,
-}) {
+String formatUsd(num value, {int fractionDigits = 0}) {
   return '\$${formatNumberWithCommas(value, fractionDigits: fractionDigits)}';
 }
 
 String normalizeNumberInput(String input) {
   return input.replaceAll(',', '').trim();
 }
-

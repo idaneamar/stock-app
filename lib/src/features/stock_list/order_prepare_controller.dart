@@ -19,7 +19,7 @@ class OrderPrepareController extends ChangeNotifier {
   final List<TextEditingController> ctrls = [];
 
   OrderPrepareController({required this.scanId, ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   @override
   void dispose() {
@@ -67,19 +67,16 @@ class OrderPrepareController extends ChangeNotifier {
   double totalInvestment(List<OrderItem> orders) =>
       orders.fold(0.0, (sum, o) => sum + o.currentInvestment);
 
-  void updateSize({
-    required int index,
-  }) {
+  void updateSize({required int index}) {
     if (index < 0 || index >= orders.length || index >= ctrls.length) return;
 
-    final parsed = int.tryParse(ctrls[index].text) ?? orders[index].currentPositionSize;
+    final parsed =
+        int.tryParse(ctrls[index].text) ?? orders[index].currentPositionSize;
     orders[index].updatePositionSize(parsed);
     notifyListeners();
   }
 
-  void reset({
-    required int index,
-  }) {
+  void reset({required int index}) {
     if (index < 0 || index >= orders.length || index >= ctrls.length) return;
 
     orders[index].resetToDefault();
@@ -116,7 +113,8 @@ class OrderPrepareController extends ChangeNotifier {
       if (response.statusCode == 200 && response.data['success'] == true) {
         UiFeedback.showSnackBar(
           context,
-          message: response.data['message'] ?? AppStrings.orderPlacedSuccessfully,
+          message:
+              response.data['message'] ?? AppStrings.orderPlacedSuccessfully,
           type: UiMessageType.success,
         );
       } else {

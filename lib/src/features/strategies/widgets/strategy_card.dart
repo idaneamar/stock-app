@@ -28,7 +28,10 @@ class StrategyCard extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(UIConstants.radiusL),
         border: Border.all(
-          color: isEnabled ? AppColors.success.withValues(alpha: 0.3) : AppColors.grey300,
+          color:
+              isEnabled
+                  ? AppColors.success.withValues(alpha: 0.3)
+                  : AppColors.grey300,
           width: isEnabled ? 1.5 : 1,
         ),
         boxShadow: [
@@ -55,12 +58,18 @@ class StrategyCard extends StatelessWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: isEnabled ? AppColors.successLight : AppColors.grey100,
-                        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                        color:
+                            isEnabled
+                                ? AppColors.successLight
+                                : AppColors.grey100,
+                        borderRadius: BorderRadius.circular(
+                          UIConstants.radiusM,
+                        ),
                       ),
                       child: Icon(
                         Icons.psychology_outlined,
-                        color: isEnabled ? AppColors.success : AppColors.grey500,
+                        color:
+                            isEnabled ? AppColors.success : AppColors.grey500,
                         size: UIConstants.iconL,
                       ),
                     ),
@@ -86,7 +95,9 @@ class StrategyCard extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.grey100,
-                              borderRadius: BorderRadius.circular(UIConstants.radiusXS),
+                              borderRadius: BorderRadius.circular(
+                                UIConstants.radiusXS,
+                              ),
                             ),
                             child: Text(
                               '#${strategy.id}',
@@ -108,10 +119,7 @@ class StrategyCard extends StatelessWidget {
             ),
           ),
           // Divider
-          Container(
-            height: 1,
-            color: AppColors.grey200,
-          ),
+          Container(height: 1, color: AppColors.grey200),
           // Action row
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -127,7 +135,9 @@ class StrategyCard extends StatelessWidget {
                       Switch(
                         value: isEnabled,
                         onChanged: onToggle,
-                        activeTrackColor: AppColors.success.withValues(alpha: 0.5),
+                        activeTrackColor: AppColors.success.withValues(
+                          alpha: 0.5,
+                        ),
                         activeThumbColor: AppColors.success,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -136,7 +146,8 @@ class StrategyCard extends StatelessWidget {
                         isEnabled ? 'Active' : 'Inactive',
                         style: TextStyle(
                           fontSize: UIConstants.fontL,
-                          color: isEnabled ? AppColors.success : AppColors.grey600,
+                          color:
+                              isEnabled ? AppColors.success : AppColors.grey600,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -181,7 +192,10 @@ class StrategyCard extends StatelessWidget {
         color: isEnabled ? AppColors.successLight : AppColors.grey100,
         borderRadius: BorderRadius.circular(UIConstants.radiusCircular),
         border: Border.all(
-          color: isEnabled ? AppColors.success.withValues(alpha: 0.3) : AppColors.grey300,
+          color:
+              isEnabled
+                  ? AppColors.success.withValues(alpha: 0.3)
+                  : AppColors.grey300,
         ),
       ),
       child: Row(

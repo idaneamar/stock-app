@@ -139,47 +139,48 @@ class LoadingDialog {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Material(
-        type: MaterialType.transparency,
-        child: Center(
-          child: Container(
-            padding: AppPadding.allXL,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: AppRadius.m,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: UIConstants.animationVerySlow,
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: 0.8 + (value * 0.2),
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          progressColor ?? AppColors.blue,
-                        ),
-                        strokeWidth: UIConstants.progressStrokeM,
+      builder:
+          (context) => Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: Container(
+                padding: AppPadding.allXL,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: AppRadius.m,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: UIConstants.animationVerySlow,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: 0.8 + (value * 0.2),
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              progressColor ?? AppColors.blue,
+                            ),
+                            strokeWidth: UIConstants.progressStrokeM,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: UIConstants.spacingXL),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: UIConstants.fontXL,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.black,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: UIConstants.spacingXL),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: UIConstants.fontXL,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.black,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 

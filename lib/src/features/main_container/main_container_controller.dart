@@ -75,4 +75,3 @@ class MainContainerController extends GetxController {
     currentIndex.value = index;
   }
 }
-

@@ -30,7 +30,8 @@ class OrderPrepareOrdersList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: UIConstants.spacingM),
       itemBuilder: (context, index) {
         final order = orders[index];
-        final ctrl = index < ctrls.length ? ctrls[index] : TextEditingController();
+        final ctrl =
+            index < ctrls.length ? ctrls[index] : TextEditingController();
         return OrderPrepareOrderCard(
           order: order,
           index: index,
@@ -42,4 +43,3 @@ class OrderPrepareOrdersList extends StatelessWidget {
     );
   }
 }
-
