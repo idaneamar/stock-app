@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -44,10 +45,20 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
     });
 
     try {
-      final response = await _api.createProgram({
-        'name': name,
-        'ignore_vix': false,
-      });
+      // Generate a stable program_id from the name (lowercase, spaces → underscores)
+      final programId = name
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+          .replaceAll(RegExp(r'^_+|_+$'), '');
+
+      final response = await _api.createProgram(
+        jsonDecode(jsonEncode({
+          'program_id': programId,
+          'name': name,
+          'is_baseline': false,
+          'config': <String, dynamic>{},
+        })) as Map<String, dynamic>,
+      );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Refresh ProgramsController if it's active
         try {
@@ -62,17 +73,25 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
         Navigator.of(context).pop(true);
         return;
       }
-      log(
-        'Create program failed: status=${response.statusCode} data=${response.data}',
-      );
+      final errMsg = (response.data is Map)
+          ? (response.data['detail'] ?? response.data['message'] ?? AppStrings.programCreateFailed)
+          : AppStrings.programCreateFailed;
+      log('Create program failed: status=${response.statusCode} data=${response.data}');
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _errorMessage = errMsg.toString();
+      });
+      return;
     } catch (e, st) {
       log('Create program error: $e', stackTrace: st);
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+      return;
     }
-    if (!mounted) return;
-    setState(() {
-      _isSaving = false;
-      _errorMessage = AppStrings.programCreateFailed;
-    });
   }
 
   @override

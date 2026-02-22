@@ -116,6 +116,20 @@ class ProgramsController extends GetxController {
     return false;
   }
 
+  /// Updates a strategy's rules/config.
+  Future<bool> updateStrategy(int id, Map<String, dynamic> payload) async {
+    try {
+      final response = await _api.updateStrategy(id, payload);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchStrategies();
+        return true;
+      }
+    } catch (e) {
+      log('Error updating strategy: $e');
+    }
+    return false;
+  }
+
   /// Deletes [program]. Built-in (baseline) programs are protected on the backend.
   Future<bool> deleteProgram(Map<String, dynamic> program) async {
     try {

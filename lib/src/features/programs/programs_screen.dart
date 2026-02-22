@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/features/programs/programs_controller.dart';
 import 'package:stock_app/src/features/strategies/program_create_screen.dart';
+import 'package:stock_app/src/features/strategies/strategy_editor_dialog.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
@@ -350,8 +351,8 @@ class _ProgramCard extends StatelessWidget {
       builder:
           (dialogContext) => AlertDialog(
             title: const Text(AppStrings.editStrategies),
-            content: SizedBox(
-              width: 300,
+              content: SizedBox(
+              width: 340,
               child: Obx(
                 () => SingleChildScrollView(
                   child: Column(
@@ -359,18 +360,44 @@ class _ProgramCard extends StatelessWidget {
                     children:
                         controller.allStrategies.map((strategy) {
                           final isChecked = selected.contains(strategy.name);
-                          return CheckboxListTile(
-                            title: Text(strategy.name),
-                            value: isChecked,
-                            onChanged: (v) {
-                              if (v == true) {
-                                selected.add(strategy.name);
-                              } else {
-                                selected.remove(strategy.name);
-                              }
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                            dense: true,
+                          return Row(
+                            children: [
+                              Checkbox(
+                                value: isChecked,
+                                onChanged: (v) {
+                                  if (v == true) {
+                                    selected.add(strategy.name);
+                                  } else {
+                                    selected.remove(strategy.name);
+                                  }
+                                },
+                              ),
+                              Expanded(
+                                child: Text(
+                                  strategy.name,
+                                  style: const TextStyle(
+                                    fontSize: UIConstants.fontL,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: AppColors.blue,
+                                ),
+                                tooltip: 'Edit rules',
+                                onPressed: () => showStrategyEditorDialog(
+                                  context,
+                                  initial: strategy,
+                                  onSubmit: (payload) =>
+                                      controller.updateStrategy(
+                                        strategy.id,
+                                        payload,
+                                      ),
+                                ),
+                              ),
+                            ],
                           );
                         }).toList(),
                   ),
