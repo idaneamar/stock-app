@@ -231,6 +231,9 @@ class HomeController extends GetxController {
           selectedProgramId.value.isEmpty
               ? (activeProgramId.isEmpty ? null : activeProgramId)
               : selectedProgramId.value;
+      log(
+        'Scan: program_id=${programId ?? "(No Program - backend uses enabled strategies)"}',
+      );
 
       final response = await _apiService.scanStocks(
         maxMarketCap: (double.tryParse(maxMarketCapCtrl.text) ?? 0) * 1000000,

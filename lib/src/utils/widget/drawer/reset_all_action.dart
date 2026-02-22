@@ -40,13 +40,15 @@ class ResetAllAction {
                 try {
                   final response = await ApiService().resetAll();
                   if (response.data['success'] == true) {
-                    UiFeedback.showSnackBar(
-                      context,
-                      message:
-                          response.data['message'] ??
-                          AppStrings.dataResetSuccessfully,
-                      type: UiMessageType.success,
-                    );
+                    if (context.mounted) {
+                      UiFeedback.showSnackBar(
+                        context,
+                        message:
+                            response.data['message'] ??
+                            AppStrings.dataResetSuccessfully,
+                        type: UiMessageType.success,
+                      );
+                    }
                     try {
                       Get.delete<MainContainerController>(force: true);
                       Get.delete<HomeController>(force: true);
@@ -55,18 +57,22 @@ class ResetAllAction {
                     } catch (_) {}
                     Get.offAll(() => const MainContainerScreen());
                   } else {
+                    if (context.mounted) {
+                      UiFeedback.showSnackBar(
+                        context,
+                        message: AppStrings.failedToResetData,
+                        type: UiMessageType.error,
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
                     UiFeedback.showSnackBar(
                       context,
-                      message: AppStrings.failedToResetData,
+                      message: '${AppStrings.failedToResetData}: $e',
                       type: UiMessageType.error,
                     );
                   }
-                } catch (e) {
-                  UiFeedback.showSnackBar(
-                    context,
-                    message: '${AppStrings.failedToResetData}: $e',
-                    type: UiMessageType.error,
-                  );
                 } finally {
                   isResetting.value = false;
                 }

@@ -134,11 +134,12 @@ class FullActiveTradesScreen extends StatelessWidget {
   }
 
   Widget _buildTradesTab(List<ActiveTrade> trades, String emptyMessage) {
-    if (trades.isEmpty)
+    if (trades.isEmpty) {
       return EmptyStateWidget(
         title: emptyMessage,
         subtitle: AppStrings.noTradesFoundForDateRange,
       );
+    }
     return RefreshIndicator(
       onRefresh: controller.refreshFullActiveTrades,
       child: ListView.builder(

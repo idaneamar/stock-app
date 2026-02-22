@@ -23,7 +23,9 @@ class OrderPrepareController extends ChangeNotifier {
 
   @override
   void dispose() {
-    for (final c in ctrls) c.dispose();
+    for (final c in ctrls) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -51,7 +53,9 @@ class OrderPrepareController extends ChangeNotifier {
   }
 
   void _setOrders(List<OrderItem> orders) {
-    for (final c in ctrls) c.dispose();
+    for (final c in ctrls) {
+      c.dispose();
+    }
     ctrls.clear();
     this.orders
       ..clear()
@@ -110,6 +114,7 @@ class OrderPrepareController extends ChangeNotifier {
         modifiedOrders: payload,
       );
 
+      if (!context.mounted) return;
       if (response.statusCode == 200 && response.data['success'] == true) {
         UiFeedback.showSnackBar(
           context,
@@ -125,6 +130,7 @@ class OrderPrepareController extends ChangeNotifier {
         );
       }
     } catch (e) {
+      if (!context.mounted) return;
       UiFeedback.showSnackBar(
         context,
         message: '${AppStrings.failedToPlaceOrder}: $e',

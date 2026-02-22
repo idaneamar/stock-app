@@ -20,9 +20,9 @@ class OrderPrepareSummaryBar extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.blue.withOpacity(0.1),
+            color: AppColors.blue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.blue.withOpacity(0.3)),
+            border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

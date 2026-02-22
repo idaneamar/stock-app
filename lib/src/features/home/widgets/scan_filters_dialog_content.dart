@@ -29,7 +29,7 @@ class ScanFiltersDialogContent extends StatelessWidget {
                           ? (items.first['program_id'] ?? '').toString()
                           : null);
               return DropdownButtonFormField<String>(
-                value: displayValue,
+                initialValue: displayValue,
                 decoration: const InputDecoration(
                   labelText: AppStrings.program,
                   border: OutlineInputBorder(),

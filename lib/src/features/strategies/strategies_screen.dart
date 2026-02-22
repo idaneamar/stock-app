@@ -220,7 +220,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
               ),
             ];
             return DropdownButtonFormField<String>(
-              value: displayValue,
+              initialValue: displayValue,
               decoration: const InputDecoration(
                 labelText: AppStrings.selectProgram,
                 border: OutlineInputBorder(),

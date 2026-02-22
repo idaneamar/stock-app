@@ -29,7 +29,7 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         Get.offAll(() => const MainContainerScreen());
       },
@@ -256,15 +256,17 @@ class _OpenTradesScreenState extends State<OpenTradesScreen> {
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
     if (file.bytes == null) {
-      if (mounted)
+      if (mounted) {
         SnackbarHelper.showSimpleError(
           context,
           message: AppStrings.failedToReadFile,
         );
+      }
       return;
     }
     final jsonString = utf8.decode(file.bytes!);
     final jsonData = json.decode(jsonString) as Map<String, dynamic>;
+    if (!mounted) return;
     LoadingDialog.showWithContext(
       context,
       message: AppStrings.importingTrades,

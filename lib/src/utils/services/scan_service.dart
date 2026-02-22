@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'dart:developer';
 import 'package:stock_app/src/utils/services/api_client.dart';
@@ -22,27 +23,28 @@ class ScanService {
     bool allowIntradayPrices = false,
   }) async {
     try {
-      final response = await _client.dio.post(
-        "scans/",
-        data: {
-          "max_market_cap": maxMarketCap,
-          "ignore_vix": ignoreVix,
-          "min_avg_transaction_value": minAvgTransactionValue,
-          "min_avg_volume": minAvgVolume,
-          "min_market_cap": minMarketCap,
-          "min_price": minPrice,
-          "min_volatility": minVolatility,
-          "top_n_stocks": topNStocks,
-          if (programId != null) "program_id": programId,
-          "strict_rules": strictRules,
-          if (adxMin != null) "adx_min": adxMin,
-          if (volumeSpikeRequired != null)
-            "volume_spike_required": volumeSpikeRequired,
-          if (dailyLossLimitPct != null)
-            "daily_loss_limit_pct": dailyLossLimitPct,
-          "allow_intraday_prices": allowIntradayPrices,
-        },
-      );
+      final payload = <String, dynamic>{
+        "max_market_cap": maxMarketCap,
+        "ignore_vix": ignoreVix,
+        "min_avg_transaction_value": minAvgTransactionValue,
+        "min_avg_volume": minAvgVolume,
+        "min_market_cap": minMarketCap,
+        "min_price": minPrice,
+        "min_volatility": minVolatility,
+        "top_n_stocks": topNStocks,
+        "strict_rules": strictRules,
+        if (adxMin != null) "adx_min": adxMin,
+        if (volumeSpikeRequired != null)
+          "volume_spike_required": volumeSpikeRequired,
+        if (dailyLossLimitPct != null)
+          "daily_loss_limit_pct": dailyLossLimitPct,
+        "allow_intraday_prices": allowIntradayPrices,
+      };
+      if (programId != null && programId.isNotEmpty) {
+        payload["program_id"] = programId;
+      }
+      log('POST /scans payload (exact JSON): ${jsonEncode(payload)}');
+      final response = await _client.dio.post("scans/", data: payload);
       return response;
     } on DioException catch (e) {
       throw _client.handleError(e);

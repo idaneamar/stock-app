@@ -27,8 +27,9 @@ class ApiConfig {
 
   static String _normalizeWebSocketBaseUrl(String url) {
     var normalized = url.trim();
-    if (normalized.endsWith('/'))
+    if (normalized.endsWith('/')) {
       normalized = normalized.substring(0, normalized.length - 1);
+    }
     return normalized;
   }
 

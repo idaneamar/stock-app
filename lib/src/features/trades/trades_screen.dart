@@ -150,16 +150,24 @@ class _TradesScreenState extends State<TradesScreen> {
   }
 
   Future<void> _editTrade(Trade trade) async {
-    final updates = await EditAnalysisTradeDialog.show(context, trade: trade);
-    if (updates != null) await controller.updateTrade(context, updates);
+    final ctx = context;
+    final updates = await EditAnalysisTradeDialog.show(ctx, trade: trade);
+    if (updates != null) {
+      if (!ctx.mounted) return;
+      await controller.updateTrade(ctx, updates);
+    }
   }
 
   Future<void> _confirmDeleteTrade(Trade trade) async {
+    final ctx = context;
     final confirmed = await TradeDialogs.showDeleteConfirmation(
-      context: context,
+      context: ctx,
       symbol: trade.symbol,
       isOpenTrade: false,
     );
-    if (confirmed == true) await controller.deleteTrade(context, trade.symbol);
+    if (confirmed == true) {
+      if (!ctx.mounted) return;
+      await controller.deleteTrade(ctx, trade.symbol);
+    }
   }
 }

@@ -14,7 +14,7 @@ class OrderPrepareHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.blue.withOpacity(0.1),
+            color: AppColors.blue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(Icons.analytics, color: AppColors.blue, size: 28),

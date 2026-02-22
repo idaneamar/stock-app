@@ -78,17 +78,21 @@ class AnalysisTradesController extends ChangeNotifier {
         await FileHelper.saveFileToDownloads(bytes, fileName);
       }
 
-      UiFeedback.showSnackBar(
-        context,
-        message: AppStrings.downloadStarted,
-        type: UiMessageType.success,
-      );
+      if (context != null && context.mounted) {
+        UiFeedback.showSnackBar(
+          context,
+          message: AppStrings.downloadStarted,
+          type: UiMessageType.success,
+        );
+      }
     } catch (e) {
-      UiFeedback.showSnackBar(
-        context,
-        message: '${AppStrings.errorDownloadingExcelFile} $e',
-        type: UiMessageType.error,
-      );
+      if (context != null && context.mounted) {
+        UiFeedback.showSnackBar(
+          context,
+          message: '${AppStrings.errorDownloadingExcelFile} $e',
+          type: UiMessageType.error,
+        );
+      }
     } finally {
       isDownloading = false;
       notifyListeners();
@@ -108,24 +112,30 @@ class AnalysisTradesController extends ChangeNotifier {
       );
       if (response.statusCode == 200) {
         await refresh();
-        UiFeedback.showSnackBar(
-          context,
-          message: AppStrings.tradeUpdatedSuccessfully,
-          type: UiMessageType.success,
-        );
+        if (context != null && context.mounted) {
+          UiFeedback.showSnackBar(
+            context,
+            message: AppStrings.tradeUpdatedSuccessfully,
+            type: UiMessageType.success,
+          );
+        }
       } else {
+        if (context != null && context.mounted) {
+          UiFeedback.showSnackBar(
+            context,
+            message: AppStrings.failedToUpdateTrade,
+            type: UiMessageType.error,
+          );
+        }
+      }
+    } catch (e) {
+      if (context != null && context.mounted) {
         UiFeedback.showSnackBar(
           context,
-          message: AppStrings.failedToUpdateTrade,
+          message: '${AppStrings.errorUpdatingTrade} $e',
           type: UiMessageType.error,
         );
       }
-    } catch (e) {
-      UiFeedback.showSnackBar(
-        context,
-        message: '${AppStrings.errorUpdatingTrade} $e',
-        type: UiMessageType.error,
-      );
     } finally {
       isBusy = false;
       notifyListeners();
@@ -142,24 +152,30 @@ class AnalysisTradesController extends ChangeNotifier {
       );
       if (response.statusCode == 200) {
         await refresh();
-        UiFeedback.showSnackBar(
-          context,
-          message: '$symbol ${AppStrings.deletedSuccessfully}',
-          type: UiMessageType.success,
-        );
+        if (context != null && context.mounted) {
+          UiFeedback.showSnackBar(
+            context,
+            message: '$symbol ${AppStrings.deletedSuccessfully}',
+            type: UiMessageType.success,
+          );
+        }
       } else {
+        if (context != null && context.mounted) {
+          UiFeedback.showSnackBar(
+            context,
+            message: AppStrings.failedToDeleteTrade,
+            type: UiMessageType.error,
+          );
+        }
+      }
+    } catch (e) {
+      if (context != null && context.mounted) {
         UiFeedback.showSnackBar(
           context,
-          message: AppStrings.failedToDeleteTrade,
+          message: '${AppStrings.errorDeletingTrade} $e',
           type: UiMessageType.error,
         );
       }
-    } catch (e) {
-      UiFeedback.showSnackBar(
-        context,
-        message: '${AppStrings.errorDeletingTrade} $e',
-        type: UiMessageType.error,
-      );
     } finally {
       isBusy = false;
       notifyListeners();
