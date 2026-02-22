@@ -7,6 +7,7 @@ import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/widget/common/common_widgets.dart';
+import 'package:stock_app/src/utils/widget/app_text_field.dart';
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({super.key});
@@ -87,9 +88,9 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: UIConstants.spacingXXXL),
             _buildSettingsCard(),
             const SizedBox(height: UIConstants.spacingL),
-            _buildUseVixFilterCard(),
-            const SizedBox(height: UIConstants.spacingXL),
             _buildEditButton(context),
+            const SizedBox(height: UIConstants.spacingXL),
+            _buildEngineSettingsCard(context),
           ],
         ),
       ),
@@ -181,40 +182,141 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUseVixFilterCard() {
-    return Obx(
-      () => Container(
-        width: double.infinity,
-        padding: AppPadding.allXL,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(UIConstants.radiusL),
-          border: Border.all(color: AppColors.grey300),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.grey.withValues(alpha: 0.1),
-              blurRadius: UIConstants.elevationXL,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: SwitchListTile.adaptive(
-          value: controller.useVixFilter.value,
-          onChanged: (value) => controller.setUseVixFilter(value),
-          title: const Text(
-            AppStrings.useVixFilter,
-            style: TextStyle(
-              fontSize: UIConstants.fontXL,
-              fontWeight: FontWeight.w600,
-              color: AppColors.grey600,
+  Widget _buildEngineSettingsCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: AppPadding.allXL,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(UIConstants.radiusL),
+        border: Border.all(color: AppColors.grey300),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.grey.withValues(alpha: 0.1),
+            blurRadius: UIConstants.elevationXL,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune, color: AppColors.blue, size: 22),
+              const SizedBox(width: UIConstants.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      AppStrings.engineSettings,
+                      style: TextStyle(
+                        fontSize: UIConstants.fontXL,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      AppStrings.engineSettingsSubtitle,
+                      style: TextStyle(fontSize: 12, color: AppColors.grey600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          const Divider(),
+          Obx(
+            () => SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(AppStrings.useVixFilter),
+              subtitle: Text(
+                AppStrings.useVixFilterHint,
+                style: TextStyle(fontSize: 12, color: AppColors.grey600),
+              ),
+              value: controller.useVixFilter.value,
+              onChanged: controller.setUseVixFilter,
             ),
           ),
-          subtitle: Text(
-            AppStrings.useVixFilterHint,
-            style: TextStyle(fontSize: 12, color: AppColors.grey600),
+          Obx(
+            () => SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(AppStrings.strictRules),
+              subtitle: Text(
+                AppStrings.strictRulesHint,
+                style: TextStyle(fontSize: 12, color: AppColors.grey600),
+              ),
+              value: controller.strictRules.value,
+              onChanged: (v) => controller.strictRules.value = v,
+            ),
           ),
-          contentPadding: EdgeInsets.zero,
-        ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(AppStrings.volumeSpikeRequired),
+              value: controller.volumeSpikeRequired.value,
+              onChanged: (v) => controller.volumeSpikeRequired.value = v,
+            ),
+          ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(AppStrings.allowIntradayPrices),
+              value: controller.useIntraday.value,
+              onChanged: (v) => controller.useIntraday.value = v,
+            ),
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          AppTextField(
+            label: AppStrings.adxMin,
+            controller: controller.adxMinCtrl,
+            isDecimal: true,
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          AppTextField(
+            label: AppStrings.dailyLossLimitPct,
+            controller: controller.dailyLossLimitCtrl,
+            isDecimal: true,
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          Obx(
+            () => SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed:
+                    controller.isUpdating.value
+                        ? null
+                        : () => controller.saveEngineSettings(context),
+                icon: const Icon(Icons.save, color: AppColors.white),
+                label: Text(
+                  controller.isUpdating.value
+                      ? AppStrings.updatingSettings
+                      : AppStrings.saveEngineSettings,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: UIConstants.fontL,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      controller.isUpdating.value
+                          ? AppColors.grey300
+                          : AppColors.blue,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: UIConstants.paddingL,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

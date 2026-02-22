@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:stock_app/src/features/main_container/main_container_screen.dart';
+import 'package:stock_app/src/features/programs/programs_screen.dart';
 import 'package:stock_app/src/features/strategies/strategies_screen.dart';
 import 'package:stock_app/src/features/trades/closed_trades_screen.dart';
 import 'package:stock_app/src/features/trades/open_trades_screen.dart';
@@ -64,6 +65,14 @@ class AppDrawerContent extends StatelessWidget {
                   subtitle: AppStrings.drawerRecommendationsSubtitle,
                   onTap:
                       () => _handleMenuSelection(context, 'full_active_trades'),
+                ),
+                const SizedBox(height: 16),
+                DrawerItemCard(
+                  icon: Icons.layers,
+                  iconColor: AppColors.blue,
+                  title: AppStrings.programs,
+                  subtitle: AppStrings.drawerProgramsSubtitle,
+                  onTap: () => _handleMenuSelection(context, 'programs'),
                 ),
                 const SizedBox(height: 16),
                 DrawerItemCard(
@@ -148,6 +157,13 @@ class AppDrawerContent extends StatelessWidget {
         break;
       case 'full_active_trades':
         _goToMainContainer(navigator, 2);
+        break;
+      case 'programs':
+        Future.microtask(
+          () => navigator.push(
+            MaterialPageRoute(builder: (_) => const ProgramsScreen()),
+          ),
+        );
         break;
       case 'strategies':
         Future.microtask(

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/models/scan_history_response.dart';
 import 'package:stock_app/src/models/trade_response.dart';
@@ -11,6 +12,8 @@ import 'package:stock_app/src/features/main_container/main_container_screen.dart
 import 'package:stock_app/src/features/main_container/main_container_controller.dart';
 import 'package:stock_app/src/features/stock_list/analysis_order_prepare_screen.dart';
 import 'package:stock_app/src/utils/helpers/snackbar_helper.dart';
+import 'package:stock_app/src/utils/colors/app_colors.dart';
+import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'dart:developer';
 
 class StockAnalysisController extends GetxController {
@@ -195,33 +198,38 @@ class StockAnalysisController extends GetxController {
     }
   }
 
-  Future<void> restartAnalysis() async {
+  /// Shows a program-selection dialog, then restarts analysis with the chosen program.
+  Future<void> restartAnalysis({BuildContext? context}) async {
     if (currentScan.value == null) return;
+
+    // Resolve context – use navigator overlay if none provided
+    final ctx = context ?? Get.context;
+    if (ctx == null) return;
+
+    final selectedProgramId = await _showSelectProgramDialog(ctx);
+    // null = user cancelled
+    if (selectedProgramId == null) return;
 
     try {
       isRestartingAnalysis.value = true;
-
-      final response = await _apiService.restartAnalysis(currentScan.value!.id);
+      final programId = selectedProgramId.isEmpty ? null : selectedProgramId;
+      final response = await _apiService.restartAnalysis(
+        currentScan.value!.id,
+        programId: programId,
+      );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         SnackbarHelper.showSuccess(message: 'Analysis restarted successfully');
 
-        // Navigate to MainContainerScreen and refresh home data
         Get.find<HomeController>().refreshScanHistory();
 
-        // Ensure the MainContainerController exists and is set to home screen
         MainContainerController mainController;
         try {
           mainController = Get.find<MainContainerController>();
         } catch (e) {
-          // If controller doesn't exist, it will be created by MainContainerScreen
           mainController = Get.put(MainContainerController(), permanent: true);
         }
-
-        // Set to home screen before navigation
         mainController.setInitialIndex(0);
-
-        // Navigate to MainContainerScreen
         Get.offAll(() => const MainContainerScreen());
       } else {
         throw Exception(
@@ -236,6 +244,92 @@ class StockAnalysisController extends GetxController {
     } finally {
       isRestartingAnalysis.value = false;
     }
+  }
+
+  /// Shows a dialog to select a strategy set for re-analysis.
+  /// Returns the selected program_id (empty string = "No Program"), or null if cancelled.
+  Future<String?> _showSelectProgramDialog(BuildContext context) async {
+    // Load programs list
+    List<Map<String, dynamic>> programs = [];
+    try {
+      final response = await _apiService.getPrograms();
+      if (response.statusCode == 200) {
+        final data = (response.data ?? {})['data'] ?? {};
+        final items = (data['items'] as List?) ?? [];
+        programs =
+            items
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+      }
+    } catch (_) {}
+
+    if (!context.mounted) return null;
+
+    String selectedId = '';
+
+    return showDialog<String>(
+      context: context,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder:
+                (ctx, setState) => AlertDialog(
+                  title: const Text(AppStrings.selectStrategySet),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.selectProgramForRestart,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.grey600,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedId,
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.program,
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text(AppStrings.noProgram),
+                          ),
+                          ...programs.map(
+                            (p) => DropdownMenuItem<String>(
+                              value: (p['program_id'] ?? '').toString(),
+                              child: Text(
+                                (p['name'] ?? p['program_id'] ?? '').toString(),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => selectedId = v ?? ''),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(null),
+                      child: const Text(AppStrings.cancel),
+                    ),
+                    ElevatedButton(
+                      onPressed:
+                          () => Navigator.of(dialogContext).pop(selectedId),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.blue,
+                        foregroundColor: AppColors.white,
+                      ),
+                      child: const Text(AppStrings.reAnalyze),
+                    ),
+                  ],
+                ),
+          ),
+    );
   }
 
   Future<void> placeOrders() async {

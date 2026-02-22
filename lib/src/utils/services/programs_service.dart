@@ -38,4 +38,12 @@ class ProgramsService {
       throw _client.handleError(e);
     }
   }
+
+  Future<Response> deleteProgram(String programId) async {
+    try {
+      return await _client.dio.delete('programs/$programId');
+    } on DioException catch (e) {
+      throw _client.handleError(e);
+    }
+  }
 }

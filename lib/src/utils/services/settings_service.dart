@@ -13,9 +13,27 @@ class SettingsService {
     }
   }
 
-  Future<Response> updateSettings({required double portfolioSize}) async {
+  Future<Response> updateSettings({
+    required double portfolioSize,
+    bool? strictRules,
+    double? adxMin,
+    bool clearAdxMin = false,
+    bool? volumeSpikeRequired,
+    bool? useIntraday,
+    double? dailyLossLimitPct,
+  }) async {
     try {
-      final requestData = {'portfolio_size': portfolioSize.round()};
+      final requestData = <String, dynamic>{
+        'portfolio_size': portfolioSize.round(),
+        if (strictRules != null) 'strict_rules': strictRules,
+        // adxMin can be null (clearing it) – send null explicitly when clearAdxMin
+        if (clearAdxMin || adxMin != null) 'adx_min': adxMin,
+        if (volumeSpikeRequired != null)
+          'volume_spike_required': volumeSpikeRequired,
+        if (useIntraday != null) 'use_intraday': useIntraday,
+        if (dailyLossLimitPct != null)
+          'daily_loss_limit_pct': dailyLossLimitPct,
+      };
 
       log('PUT settings/ - Request data: $requestData');
       final response = await _client.dio.put(

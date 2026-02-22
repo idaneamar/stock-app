@@ -291,6 +291,40 @@ abstract class AppStrings {
   static const String unexpectedResponseDataType =
       'Unexpected response data type:';
 
+  // Programs / Strategy Sets Screen
+  static const String programs = 'Programs / Strategy Sets';
+  static const String programsSets = 'Strategy Sets';
+  static const String drawerProgramsSubtitle =
+      'Manage strategy sets & programs';
+  static const String programsScreenSubtitle =
+      'Create and manage your strategy sets';
+  static const String editStrategies = 'Edit Strategies';
+  static const String renameProgram = 'Rename Program';
+  static const String newProgramName = 'New name';
+  static const String programRenamed = 'Program renamed successfully';
+  static const String programRenameFailed = 'Failed to rename program';
+  static const String programDeleted = 'Program deleted successfully';
+  static const String programDeleteFailed = 'Failed to delete program';
+  static const String deleteProgram = 'Delete Program';
+  static const String deleteProgramConfirm = 'Delete this program?';
+  static const String deleteProgramWarning =
+      'This action cannot be undone. STR9 is protected and cannot be deleted.';
+  static const String strategiesInProgram = 'Strategies';
+  static const String noStrategiesInProgram = 'No strategies in this program';
+  static const String saveStrategies = 'Save Strategies';
+  static const String builtIn = 'Built-in';
+  static const String selectStrategySet = 'Select Strategy Set';
+  static const String reAnalyze = 'Re-analyze';
+  static const String selectProgramForRestart =
+      'Choose which strategy set to use for the re-analysis.';
+
+  // Engine Settings (global scan engine toggles)
+  static const String engineSettings = 'Engine Settings';
+  static const String engineSettingsSubtitle =
+      'Applied globally to every scan and re-analysis';
+  static const String engineSettingsSaved = 'Engine settings saved';
+  static const String saveEngineSettings = 'Save Engine Settings';
+
   // Drawer Menu
   static const String menu = 'Menu';
   static const String home = 'Home';

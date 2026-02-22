@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stock_app/src/features/strategies/strategies_controller.dart';
+import 'package:stock_app/src/features/programs/programs_controller.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
@@ -18,7 +18,6 @@ class ProgramCreateScreen extends StatefulWidget {
 }
 
 class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
-  final StrategiesController controller = Get.find<StrategiesController>();
   final ApiService _api = ApiService();
   final TextEditingController _nameController = TextEditingController();
   bool _isSaving = false;
@@ -50,7 +49,10 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
         'ignore_vix': false,
       });
       if (response.statusCode == 201 || response.statusCode == 200) {
-        await controller.fetchPrograms();
+        // Refresh ProgramsController if it's active
+        try {
+          Get.find<ProgramsController>().fetchPrograms();
+        } catch (_) {}
         if (!mounted) return;
         UiFeedback.showSnackBar(
           context,

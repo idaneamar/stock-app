@@ -18,7 +18,8 @@ class ApiService {
   final StrategiesService _strategiesService = StrategiesService();
   final ProgramsService _programsService = ProgramsService();
 
-  // Scan Methods
+  // Scan Methods – engine toggles (strict_rules, adx_min, etc.) now come from
+  // global Settings on the backend; only universe filters + programId are sent here.
   Future<Response> scanStocks({
     required double maxMarketCap,
     bool ignoreVix = false,
@@ -29,11 +30,6 @@ class ApiService {
     required double minVolatility,
     required double topNStocks,
     String? programId,
-    bool strictRules = true,
-    double? adxMin,
-    bool? volumeSpikeRequired,
-    double? dailyLossLimitPct,
-    bool allowIntradayPrices = false,
   }) => _scanService.scanStocks(
     maxMarketCap: maxMarketCap,
     ignoreVix: ignoreVix,
@@ -44,11 +40,6 @@ class ApiService {
     minVolatility: minVolatility,
     topNStocks: topNStocks,
     programId: programId,
-    strictRules: strictRules,
-    adxMin: adxMin,
-    volumeSpikeRequired: volumeSpikeRequired,
-    dailyLossLimitPct: dailyLossLimitPct,
-    allowIntradayPrices: allowIntradayPrices,
   );
 
   // Programs Methods
@@ -59,6 +50,8 @@ class ApiService {
       _programsService.applyProgram(programId);
   Future<Response> revertToBaselineProgram() =>
       _programsService.revertToBaseline();
+  Future<Response> deleteProgram(String programId) =>
+      _programsService.deleteProgram(programId);
 
   Future<Response> getScans({int page = 1, int pageSize = 10}) =>
       _scanService.getScans(page: page, pageSize: pageSize);
@@ -79,8 +72,8 @@ class ApiService {
   Future<Response> getAllScannedStocksExcel(String scanId) =>
       _scanService.getAllScannedStocksExcel(scanId);
 
-  Future<Response> restartAnalysis(int scanId) =>
-      _scanService.restartAnalysis(scanId);
+  Future<Response> restartAnalysis(int scanId, {String? programId}) =>
+      _scanService.restartAnalysis(scanId, programId: programId);
 
   // Strategies Methods
   Future<Response> getStrategies({bool enabledOnly = false}) =>
@@ -211,8 +204,23 @@ class ApiService {
   // Settings Methods
   Future<Response> getSettings() => _settingsService.getSettings();
 
-  Future<Response> updateSettings({required double portfolioSize}) =>
-      _settingsService.updateSettings(portfolioSize: portfolioSize);
+  Future<Response> updateSettings({
+    required double portfolioSize,
+    bool? strictRules,
+    double? adxMin,
+    bool clearAdxMin = false,
+    bool? volumeSpikeRequired,
+    bool? useIntraday,
+    double? dailyLossLimitPct,
+  }) => _settingsService.updateSettings(
+    portfolioSize: portfolioSize,
+    strictRules: strictRules,
+    adxMin: adxMin,
+    clearAdxMin: clearAdxMin,
+    volumeSpikeRequired: volumeSpikeRequired,
+    useIntraday: useIntraday,
+    dailyLossLimitPct: dailyLossLimitPct,
+  );
 
   Future<Response> resetAll() => _settingsService.resetAll();
 }

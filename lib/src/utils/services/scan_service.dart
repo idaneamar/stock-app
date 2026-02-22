@@ -16,11 +16,6 @@ class ScanService {
     required double minVolatility,
     required double topNStocks,
     String? programId,
-    bool strictRules = true,
-    double? adxMin,
-    bool? volumeSpikeRequired,
-    double? dailyLossLimitPct,
-    bool allowIntradayPrices = false,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -32,13 +27,6 @@ class ScanService {
         "min_price": minPrice,
         "min_volatility": minVolatility,
         "top_n_stocks": topNStocks,
-        "strict_rules": strictRules,
-        if (adxMin != null) "adx_min": adxMin,
-        if (volumeSpikeRequired != null)
-          "volume_spike_required": volumeSpikeRequired,
-        if (dailyLossLimitPct != null)
-          "daily_loss_limit_pct": dailyLossLimitPct,
-        "allow_intraday_prices": allowIntradayPrices,
       };
       if (programId != null && programId.isNotEmpty) {
         payload["program_id"] = programId;
@@ -121,12 +109,16 @@ class ScanService {
     }
   }
 
-  Future<Response> restartAnalysis(int scanId) async {
+  Future<Response> restartAnalysis(int scanId, {String? programId}) async {
     try {
-      log('Requesting restart analysis for scan ID: $scanId');
+      log(
+        'Requesting restart analysis for scan ID: $scanId, programId=$programId',
+      );
+      final data =
+          programId != null ? {'program_id': programId} : <String, dynamic>{};
       final response = await _client.dio.post(
         "scans/$scanId/restart-analysis",
-        data: '',
+        data: data,
       );
       log('Restart analysis API response status: ${response.statusCode}');
       return response;

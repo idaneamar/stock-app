@@ -135,7 +135,9 @@ class ScanAnalysisScreen extends StatelessWidget {
                           onPressed:
                               controller.isRestartingAnalysis.value
                                   ? null
-                                  : () => controller.restartAnalysis(),
+                                  : () => controller.restartAnalysis(
+                                    context: context,
+                                  ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.warning,
                             foregroundColor: AppColors.white,

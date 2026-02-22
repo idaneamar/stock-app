@@ -16,7 +16,7 @@ class HomeController extends GetxController {
     permanent: true,
   );
 
-  // Scan dialog parameters (no VIX here; global VIX is in Settings)
+  // Scan dialog parameters – universe filters only; engine toggles are in Settings
   final minMarketCapCtrl = TextEditingController(text: '120');
   final maxMarketCapCtrl = TextEditingController(text: '1500');
   final minAvgVolumeCtrl = TextEditingController(text: '15000');
@@ -26,11 +26,6 @@ class HomeController extends GetxController {
   final topNStocksCtrl = TextEditingController(text: '500');
   final RxList<Map<String, dynamic>> programs = <Map<String, dynamic>>[].obs;
   final RxString selectedProgramId = ''.obs;
-  final RxBool strictRules = true.obs;
-  final RxBool volumeSpikeRequired = true.obs;
-  final RxBool allowIntradayPrices = false.obs;
-  final adxMinCtrl = TextEditingController(text: '30');
-  final dailyLossLimitCtrl = TextEditingController(text: '0.02');
 
   var isLoading = false.obs;
   var errorMessage = ''.obs;
@@ -69,8 +64,6 @@ class HomeController extends GetxController {
     minVolatilityCtrl.dispose();
     minPriceCtrl.dispose();
     topNStocksCtrl.dispose();
-    adxMinCtrl.dispose();
-    dailyLossLimitCtrl.dispose();
     super.onClose();
   }
 
@@ -220,7 +213,9 @@ class HomeController extends GetxController {
     });
   }
 
-  /// Run scan using dialog params, global VIX (Settings), and active program id.
+  /// Run scan using universe filter params, global VIX (Settings), and active program id.
+  /// Engine toggles (strict rules, ADX, volume spike, intraday, daily loss limit)
+  /// are read from global Settings on the backend.
   Future<void> fetchStocks() async {
     try {
       isLoading.value = true;
@@ -246,11 +241,6 @@ class HomeController extends GetxController {
         minVolatility: double.tryParse(minVolatilityCtrl.text) ?? 0.0,
         topNStocks: double.tryParse(topNStocksCtrl.text) ?? 0,
         programId: programId?.isEmpty == true ? null : programId,
-        strictRules: strictRules.value,
-        adxMin: double.tryParse(adxMinCtrl.text),
-        volumeSpikeRequired: volumeSpikeRequired.value,
-        dailyLossLimitPct: double.tryParse(dailyLossLimitCtrl.text),
-        allowIntradayPrices: allowIntradayPrices.value,
       );
 
       final stockScanResponse = StockScanResponse.fromJson(response.data);

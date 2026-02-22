@@ -7,7 +7,6 @@ import 'package:stock_app/src/features/strategies/widgets/strategy_card.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
-import 'package:stock_app/src/utils/route/app_router.dart';
 import 'package:stock_app/src/utils/handlers/ui_feedback.dart';
 
 class StrategiesScreen extends StatefulWidget {
@@ -24,7 +23,6 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
   void initState() {
     super.initState();
     controller.fetchStrategies();
-    controller.fetchPrograms();
   }
 
   @override
@@ -76,7 +74,6 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
 
           return CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: _buildProgramCard(context)),
               if (controller.strategies.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -166,81 +163,6 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProgramCard(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(UIConstants.marginL),
-      padding: const EdgeInsets.all(UIConstants.paddingL),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(UIConstants.radiusL),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.grey.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.program,
-            style: const TextStyle(
-              fontSize: UIConstants.fontL,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-          Obx(() {
-            final items = controller.programs;
-            final value = controller.selectedProgramId.value;
-            final validIds =
-                items.map((p) => (p['program_id'] ?? '').toString()).toSet();
-            final displayValue =
-                value.isEmpty || !validIds.contains(value) ? '' : value;
-            final dropdownItems = <DropdownMenuItem<String>>[
-              const DropdownMenuItem<String>(
-                value: '',
-                child: Text(AppStrings.noProgram),
-              ),
-              ...items.map(
-                (p) => DropdownMenuItem<String>(
-                  value: (p['program_id'] ?? '').toString(),
-                  child: Text(
-                    (p['name'] ?? p['program_id'] ?? 'Program').toString(),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ];
-            return DropdownButtonFormField<String>(
-              initialValue: displayValue,
-              decoration: const InputDecoration(
-                labelText: AppStrings.selectProgram,
-                border: OutlineInputBorder(),
-              ),
-              items: dropdownItems,
-              onChanged: (v) {
-                if (v != null) controller.setActiveProgram(v);
-              },
-            );
-          }),
-          const SizedBox(height: UIConstants.spacingM),
-          OutlinedButton.icon(
-            onPressed: () async {
-              await Get.toNamed(Routes.createProgram);
-              controller.fetchPrograms();
-            },
-            icon: const Icon(Icons.add),
-            label: const Text(AppStrings.createProgram),
-          ),
-        ],
       ),
     );
   }

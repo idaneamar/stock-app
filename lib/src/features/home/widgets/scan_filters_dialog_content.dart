@@ -5,7 +5,9 @@ import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
 import 'package:stock_app/src/utils/widget/app_text_field.dart';
 
-/// Scan parameters dialog content. No VIX toggle (global VIX is in Settings).
+/// Scan parameters dialog – stock universe filters and program selector only.
+/// Engine toggles (strict rules, ADX, volume spike, intraday, daily loss limit)
+/// are now global settings managed in the Settings screen.
 class ScanFiltersDialogContent extends StatelessWidget {
   final HomeController controller;
 
@@ -19,39 +21,39 @@ class ScanFiltersDialogContent extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Program / Strategy Set selector
             Obx(() {
               final items = controller.programs;
               final value = controller.selectedProgramId.value;
-              final displayValue =
-                  value.isNotEmpty
-                      ? value
-                      : (items.isNotEmpty
-                          ? (items.first['program_id'] ?? '').toString()
-                          : null);
+              final dropdownItems = <DropdownMenuItem<String>>[
+                const DropdownMenuItem<String>(
+                  value: '',
+                  child: Text(AppStrings.noProgram),
+                ),
+                ...items.map(
+                  (p) => DropdownMenuItem<String>(
+                    value: (p['program_id'] ?? '').toString(),
+                    child: Text(
+                      (p['name'] ?? p['program_id'] ?? '').toString(),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ];
               return DropdownButtonFormField<String>(
-                initialValue: displayValue,
+                initialValue: value,
                 decoration: const InputDecoration(
                   labelText: AppStrings.program,
                   border: OutlineInputBorder(),
                 ),
-                items:
-                    items
-                        .map(
-                          (p) => DropdownMenuItem<String>(
-                            value: (p['program_id'] ?? '').toString(),
-                            child: Text(
-                              (p['name'] ?? p['program_id'] ?? '').toString(),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
+                items: dropdownItems,
                 onChanged: (v) {
                   if (v != null) controller.selectedProgramId.value = v;
                 },
               );
             }),
             const SizedBox(height: UIConstants.spacingM),
+            // Universe filters
             AppTextField(
               label: AppStrings.minMarketCap,
               controller: controller.minMarketCapCtrl,
@@ -87,52 +89,6 @@ class ScanFiltersDialogContent extends StatelessWidget {
             AppTextField(
               label: AppStrings.topNStocks,
               controller: controller.topNStocksCtrl,
-            ),
-            const SizedBox(height: UIConstants.spacingL),
-            const Divider(height: UIConstants.spacingL * 2),
-            Obx(
-              () => SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(AppStrings.strictRules),
-                subtitle: Text(
-                  AppStrings.strictRulesHint,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                ),
-                value: controller.strictRules.value,
-                onChanged: (value) => controller.strictRules.value = value,
-              ),
-            ),
-            const SizedBox(height: UIConstants.spacingS),
-            Obx(
-              () => SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(AppStrings.volumeSpikeRequired),
-                value: controller.volumeSpikeRequired.value,
-                onChanged:
-                    (value) => controller.volumeSpikeRequired.value = value,
-              ),
-            ),
-            const SizedBox(height: UIConstants.spacingS),
-            Obx(
-              () => SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(AppStrings.allowIntradayPrices),
-                value: controller.allowIntradayPrices.value,
-                onChanged:
-                    (value) => controller.allowIntradayPrices.value = value,
-              ),
-            ),
-            const SizedBox(height: UIConstants.spacingM),
-            AppTextField(
-              label: AppStrings.adxMin,
-              controller: controller.adxMinCtrl,
-              isDecimal: true,
-            ),
-            const SizedBox(height: UIConstants.spacingM),
-            AppTextField(
-              label: AppStrings.dailyLossLimitPct,
-              controller: controller.dailyLossLimitCtrl,
-              isDecimal: true,
             ),
           ],
         ),

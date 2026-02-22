@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:get/get.dart';
-import 'package:stock_app/src/features/home/home_controller.dart';
 import 'package:stock_app/src/models/strategy_response.dart';
 import 'package:stock_app/src/utils/services/api_service.dart';
 import 'package:stock_app/src/utils/services/shared_prefs_service.dart';
@@ -10,39 +9,13 @@ class StrategiesController extends GetxController {
   final ApiService _api = ApiService();
 
   final RxList<StrategyItem> strategies = <StrategyItem>[].obs;
-  final RxList<Map<String, dynamic>> programs = <Map<String, dynamic>>[].obs;
-  final RxString selectedProgramId = ''.obs;
   final RxBool isLoading = false.obs;
-  final RxBool isRunningScan = false.obs;
   final RxString error = ''.obs;
 
-  Future<void> fetchPrograms() async {
-    try {
-      final response = await _api.getPrograms();
-      final data = (response.data ?? {})['data'] ?? {};
-      final items = (data['items'] as List?) ?? [];
-      programs.assignAll(
-        items
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList(),
-      );
-      final savedActiveId = await SharedPrefsService.getActiveProgramId();
-      selectedProgramId.value = savedActiveId;
-    } catch (e) {
-      log('Failed to load programs: $e');
-    }
-  }
-
-  void setActiveProgram(String programId) {
-    selectedProgramId.value = programId;
-    SharedPrefsService.setActiveProgramId(programId);
-  }
-
   /// Call after any manual strategy change (toggle, create, edit, delete).
+  /// Resets the active program so manual strategy state is used.
   Future<void> clearActiveProgramOnStrategyChange() async {
     await SharedPrefsService.clearActiveProgramId();
-    selectedProgramId.value = '';
   }
 
   Future<void> fetchStrategies({bool enabledOnly = false}) async {
@@ -120,59 +93,6 @@ class StrategiesController extends GetxController {
       return strategies.firstWhere((s) => s.id == id);
     } catch (_) {
       return null;
-    }
-  }
-
-  /// Default scan params (aligned with HomeController defaults)
-  static const double _defaultMinMarketCapM = 120;
-  static const double _defaultMaxMarketCapM = 1500;
-  static const double _defaultMinAvgVolume = 15000;
-  static const double _defaultMinAvgTransactionValue = 150000;
-  static const double _defaultMinVolatility = 0.4;
-  static const double _defaultMinPrice = 2;
-  static const double _defaultTopN = 500;
-  static const bool _defaultStrictRules = true;
-  static const bool _defaultVolumeSpike = true;
-  static const bool _defaultAllowIntraday = false;
-  static const double _defaultAdxMin = 30;
-  static const double _defaultDailyLossLimit = 0.02;
-
-  /// Run a scan with the selected program. Uses global VIX setting (Settings).
-  Future<bool> runScan() async {
-    final programId = selectedProgramId.value;
-    if (programId.isEmpty) return false;
-
-    final ignoreVix = !(await SharedPrefsService.getUseVixFilter());
-
-    try {
-      isRunningScan.value = true;
-      error.value = '';
-      await _api.scanStocks(
-        maxMarketCap: _defaultMaxMarketCapM * 1000000,
-        ignoreVix: ignoreVix,
-        minAvgTransactionValue: _defaultMinAvgTransactionValue,
-        minAvgVolume: _defaultMinAvgVolume,
-        minMarketCap: _defaultMinMarketCapM * 1000000,
-        minPrice: _defaultMinPrice,
-        minVolatility: _defaultMinVolatility,
-        topNStocks: _defaultTopN,
-        programId: programId,
-        strictRules: _defaultStrictRules,
-        adxMin: _defaultAdxMin,
-        volumeSpikeRequired: _defaultVolumeSpike,
-        dailyLossLimitPct: _defaultDailyLossLimit,
-        allowIntradayPrices: _defaultAllowIntraday,
-      );
-      try {
-        Get.find<HomeController>().refreshScanHistory();
-      } catch (_) {}
-      return true;
-    } catch (e) {
-      log('Error running scan: $e');
-      error.value = e.toString();
-      return false;
-    } finally {
-      isRunningScan.value = false;
     }
   }
 }
