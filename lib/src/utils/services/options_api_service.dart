@@ -121,6 +121,42 @@ class OptionsApiService {
   }
 
   // ---------------------------------------------------------------------------
+  // AI data endpoints
+  // ---------------------------------------------------------------------------
+
+  /// Full P&L simulation for a ticker using actual expiry prices.
+  /// Returns trades[], stats{}, chain_coverage{}.
+  Future<Map<String, dynamic>> getTickerHistory(
+    String ticker, {
+    int startYear = 2023,
+    int? endYear,
+  }) async {
+    try {
+      final params = <String, dynamic>{'start_year': startYear};
+      if (endYear != null) params['end_year'] = endYear;
+      final res = await _client.dio.get(
+        '/options/ai/ticker-history/${ticker.toUpperCase()}',
+        queryParameters: params,
+      );
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      log('getTickerHistory error: ${e.message}');
+      throw _client.handleError(e);
+    }
+  }
+
+  /// Summary of all prefetched data in the OptionSys database.
+  Future<Map<String, dynamic>> getDataCoverage() async {
+    try {
+      final res = await _client.dio.get('/options/ai/data-coverage');
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      log('getDataCoverage error: ${e.message}');
+      throw _client.handleError(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Manual triggers
   // ---------------------------------------------------------------------------
 

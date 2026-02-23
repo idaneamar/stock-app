@@ -96,9 +96,10 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
     final prompt =
         count > 0
             ? 'Please analyse these $count iron condor recommendations for ${widget.recDate}. '
-                'Summarise which look strongest by score and POP, the total capital at risk, '
-                'and give me a brief overall assessment. '
-                'Also mention if any of these tickers have a strong historical track record from the backtest data.'
+                'Summarise which look strongest by score and POP, '
+                'reference their real historical win-rate and average P&L/share from the backtest data '
+                '(those numbers come from actual expiry prices, not estimates), '
+                'and give me a concise overall assessment including total capital at risk.'
             : 'I have no iron condor recommendations for ${widget.recDate}. '
                 'Can you explain what iron condors are and when they tend to work best?';
 
@@ -247,7 +248,7 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
                   ),
                 ),
                 Text(
-                  '${widget.recDate} · ${widget.recommendations.length} iron condors · historical data 2023+',
+                  '${widget.recDate} · ${widget.recommendations.length} iron condors · 499 tickers · real P&L from 2023',
                   style: TextStyle(
                     color: AppColors.grey500,
                     fontSize: UIConstants.fontM,
@@ -340,7 +341,7 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
                 enabled: !_isLoading,
                 decoration: InputDecoration(
                   hintText:
-                      'e.g. "What happened with TSLA iron condors in 2024?"',
+                      'e.g. "What happened with TSLA iron condors in 2024?" or "What is the win rate of AAPL from 2023?"',
                   hintStyle: TextStyle(color: AppColors.grey400),
                   filled: true,
                   fillColor: AppColors.grey100,
