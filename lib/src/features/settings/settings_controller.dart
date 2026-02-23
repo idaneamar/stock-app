@@ -26,7 +26,6 @@ class SettingsController extends GetxController {
   final RxBool strictRules = true.obs;
   final RxBool volumeSpikeRequired = false.obs;
   final RxBool useIntraday = false.obs;
-  final adxMinCtrl = TextEditingController();
   final dailyLossLimitCtrl = TextEditingController(text: '0.02');
 
   SettingsController({ApiService? apiService})
@@ -34,7 +33,6 @@ class SettingsController extends GetxController {
 
   @override
   void onClose() {
-    adxMinCtrl.dispose();
     dailyLossLimitCtrl.dispose();
     super.onClose();
   }
@@ -79,7 +77,6 @@ class SettingsController extends GetxController {
     strictRules.value = data.strictRules;
     volumeSpikeRequired.value = data.volumeSpikeRequired;
     useIntraday.value = data.useIntraday;
-    adxMinCtrl.text = data.adxMin != null ? data.adxMin.toString() : '';
     dailyLossLimitCtrl.text = data.dailyLossLimitPct.toString();
   }
 
@@ -134,15 +131,11 @@ class SettingsController extends GetxController {
     isUpdating.value = true;
     try {
       final portfolioSize = settings.value?.portfolioSize ?? 350000.0;
-      final adxMinRaw = adxMinCtrl.text.trim();
-      final adxMin = adxMinRaw.isEmpty ? null : double.tryParse(adxMinRaw);
       final dll = double.tryParse(dailyLossLimitCtrl.text.trim()) ?? 0.02;
 
       final response = await _apiService.updateSettings(
         portfolioSize: portfolioSize,
         strictRules: strictRules.value,
-        adxMin: adxMin,
-        clearAdxMin: adxMinRaw.isEmpty,
         volumeSpikeRequired: volumeSpikeRequired.value,
         useIntraday: useIntraday.value,
         dailyLossLimitPct: dll,

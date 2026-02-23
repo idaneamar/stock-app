@@ -34,6 +34,8 @@ const List<String> _supportedIndicators = <String>[
   'atr',
   'adx',
   'volume_spike',
+  'price_change_3d',
+  'volume_ratio_20d',
 ];
 
 final Set<String> _supportedIndicatorsSet =
@@ -974,6 +976,7 @@ Map<String, dynamic> _defaultConfigTemplate() {
   return {
     'pre_filters': [
       {'indicator': 'volume_spike', 'operator': '==', 'value': true},
+      {'indicator': 'adx', 'operator': '>', 'value': 30},
     ],
     'buy_rules': [
       {'indicator': 'ema20', 'operator': '>', 'compare_to': 'ema50'},

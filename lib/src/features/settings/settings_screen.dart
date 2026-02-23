@@ -270,12 +270,6 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: UIConstants.spacingM),
           AppTextField(
-            label: AppStrings.adxMin,
-            controller: controller.adxMinCtrl,
-            isDecimal: true,
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-          AppTextField(
             label: AppStrings.dailyLossLimitPct,
             controller: controller.dailyLossLimitCtrl,
             isDecimal: true,

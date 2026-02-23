@@ -207,16 +207,12 @@ class ApiService {
   Future<Response> updateSettings({
     required double portfolioSize,
     bool? strictRules,
-    double? adxMin,
-    bool clearAdxMin = false,
     bool? volumeSpikeRequired,
     bool? useIntraday,
     double? dailyLossLimitPct,
   }) => _settingsService.updateSettings(
     portfolioSize: portfolioSize,
     strictRules: strictRules,
-    adxMin: adxMin,
-    clearAdxMin: clearAdxMin,
     volumeSpikeRequired: volumeSpikeRequired,
     useIntraday: useIntraday,
     dailyLossLimitPct: dailyLossLimitPct,
