@@ -100,6 +100,8 @@ const _NavItem _settingsNavItem = _NavItem(
   label: 'Settings',
 );
 
+// Breakpoint below which the sidebar becomes a Drawer
+const double _mobileBreakpoint = 600.0;
 // Sidebar width
 const double _sidebarWidth = 220.0;
 // Dark sidebar background
@@ -125,6 +127,7 @@ class MainContainerScreen extends StatefulWidget {
 class _MainContainerScreenState extends State<MainContainerScreen> {
   late final MainContainerController controller;
   late final List<Widget?> _screens;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -190,8 +193,25 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
     controller.changeScreen(index);
   }
 
+  void _onMobileNavTap(int index) {
+    _onNavTap(index);
+    _scaffoldKey.currentState?.closeDrawer();
+  }
+
+  Widget _buildIndexedStack() {
+    return Obx(() {
+      final idx = controller.currentIndex.value;
+      return IndexedStack(
+        index: idx,
+        children: _screens.map((s) => s ?? const SizedBox.shrink()).toList(),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < _mobileBreakpoint;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -200,31 +220,87 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
           controller.changeScreen(0);
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.grey50,
-        body: Row(
-          children: [
-            // ── Sidebar ──────────────────────────────────────────────────
-            _AppSidebar(
-              controller: controller,
-              onNavTap: _onNavTap,
-            ),
-            // ── Content area ─────────────────────────────────────────────
-            Expanded(
-              child: Obx(() {
-                final idx = controller.currentIndex.value;
-                return IndexedStack(
-                  index: idx,
-                  children: _screens
-                      .map((s) => s ?? const SizedBox.shrink())
-                      .toList(),
-                );
-              }),
-            ),
-          ],
-        ),
+      child:
+          isMobile
+              ? _buildMobileScaffold(context)
+              : _buildDesktopScaffold(context),
+    );
+  }
+
+  // ── Mobile: AppBar + Drawer ───────────────────────────────────────────────
+
+  Widget _buildMobileScaffold(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: AppColors.grey50,
+      appBar: _MobileAppBar(controller: controller, scaffoldKey: _scaffoldKey),
+      drawer: Drawer(
+        width: _sidebarWidth,
+        backgroundColor: _sidebarBg,
+        child: _AppSidebar(controller: controller, onNavTap: _onMobileNavTap),
+      ),
+      body: _buildIndexedStack(),
+    );
+  }
+
+  // ── Desktop/tablet: permanent sidebar ────────────────────────────────────
+
+  Widget _buildDesktopScaffold(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.grey50,
+      body: Row(
+        children: [
+          _AppSidebar(controller: controller, onNavTap: _onNavTap),
+          Expanded(child: _buildIndexedStack()),
+        ],
       ),
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mobile AppBar
+// ---------------------------------------------------------------------------
+
+class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final MainContainerController controller;
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  const _MobileAppBar({required this.controller, required this.scaffoldKey});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  String _labelForIndex(int idx) {
+    const all = [..._stocksNavItems, _settingsNavItem];
+    for (final item in all) {
+      if (item.index == idx) return item.label;
+    }
+    return 'StockApp';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final idx = controller.currentIndex.value;
+      return AppBar(
+        backgroundColor: _sidebarBg,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
+          _labelForIndex(idx),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: UIConstants.fontXXL,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded, color: Colors.white),
+          onPressed: () => scaffoldKey.currentState?.openDrawer(),
+        ),
+      );
+    });
   }
 }
 
@@ -236,10 +312,7 @@ class _AppSidebar extends StatelessWidget {
   final MainContainerController controller;
   final void Function(int) onNavTap;
 
-  const _AppSidebar({
-    required this.controller,
-    required this.onNavTap,
-  });
+  const _AppSidebar({required this.controller, required this.onNavTap});
 
   @override
   Widget build(BuildContext context) {
@@ -348,11 +421,13 @@ class _AppSidebar extends StatelessWidget {
           vertical: UIConstants.paddingS,
         ),
         children: [
-          ...items.map((item) => _NavItemTile(
-                item: item,
-                controller: controller,
-                onTap: () => onNavTap(item.index),
-              )),
+          ...items.map(
+            (item) => _NavItemTile(
+              item: item,
+              controller: controller,
+              onTap: () => onNavTap(item.index),
+            ),
+          ),
           if (modeCtrl.isOptions)
             Padding(
               padding: const EdgeInsets.all(UIConstants.paddingXXL),
@@ -440,8 +515,7 @@ class _ModeToggleBtn extends StatelessWidget {
             label,
             style: TextStyle(
               color: isActive ? Colors.white : _sidebarTextColor,
-              fontWeight:
-                  isActive ? FontWeight.w600 : FontWeight.normal,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               fontSize: UIConstants.fontM,
             ),
           ),
@@ -476,11 +550,10 @@ class _NavItemTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive ? _sidebarActiveBg : Colors.transparent,
           borderRadius: BorderRadius.circular(UIConstants.radiusM),
-          border: isActive
-              ? Border(
-                  left: BorderSide(color: _sidebarAccent, width: 3),
-                )
-              : null,
+          border:
+              isActive
+                  ? Border(left: BorderSide(color: _sidebarAccent, width: 3))
+                  : null,
         ),
         child: Material(
           color: Colors.transparent,
@@ -491,9 +564,8 @@ class _NavItemTile extends StatelessWidget {
             splashColor: Colors.white.withValues(alpha: 0.1),
             child: Padding(
               padding: EdgeInsets.only(
-                left: isActive
-                    ? UIConstants.paddingL - 3
-                    : UIConstants.paddingL,
+                left:
+                    isActive ? UIConstants.paddingL - 3 : UIConstants.paddingL,
                 right: UIConstants.paddingL,
                 top: UIConstants.paddingM,
                 bottom: UIConstants.paddingM,
@@ -503,20 +575,17 @@ class _NavItemTile extends StatelessWidget {
                   Icon(
                     isActive ? item.activeIcon : item.icon,
                     size: UIConstants.iconL,
-                    color:
-                        isActive ? _sidebarAccent : _sidebarTextColor,
+                    color: isActive ? _sidebarAccent : _sidebarTextColor,
                   ),
                   const SizedBox(width: UIConstants.spacingL),
                   Expanded(
                     child: Text(
                       item.label,
                       style: TextStyle(
-                        color: isActive
-                            ? _sidebarActiveText
-                            : _sidebarTextColor,
-                        fontWeight: isActive
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+                        color:
+                            isActive ? _sidebarActiveText : _sidebarTextColor,
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.normal,
                         fontSize: UIConstants.fontL,
                       ),
                     ),
@@ -568,10 +637,7 @@ class _SidebarActionTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: UIConstants.fontL,
-                  ),
+                  style: TextStyle(color: color, fontSize: UIConstants.fontL),
                 ),
               ),
             ],

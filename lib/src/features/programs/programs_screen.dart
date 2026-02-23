@@ -351,8 +351,8 @@ class _ProgramCard extends StatelessWidget {
       builder:
           (dialogContext) => AlertDialog(
             title: const Text(AppStrings.editStrategies),
-              content: SizedBox(
-              width: 340,
+            content: SizedBox(
+              width: double.maxFinite,
               child: Obx(
                 () => SingleChildScrollView(
                   child: Column(
@@ -387,15 +387,17 @@ class _ProgramCard extends StatelessWidget {
                                   color: AppColors.blue,
                                 ),
                                 tooltip: 'Edit rules',
-                                onPressed: () => showStrategyEditorDialog(
-                                  context,
-                                  initial: strategy,
-                                  onSubmit: (payload) =>
-                                      controller.updateStrategy(
-                                        strategy.id,
-                                        payload,
-                                      ),
-                                ),
+                                onPressed:
+                                    () => showStrategyEditorDialog(
+                                      context,
+                                      initial: strategy,
+                                      onSubmit:
+                                          (payload) =>
+                                              controller.updateStrategy(
+                                                strategy.id,
+                                                payload,
+                                              ),
+                                    ),
                               ),
                             ],
                           );

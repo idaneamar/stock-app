@@ -40,14 +40,14 @@ class DashboardController extends GetxController {
         recentScans.assignAll(parsed.data.take(5).toList());
 
         final today = DateTime.now();
-        completedToday.value = parsed.data.where((s) {
-          final created =
-              DateTime.tryParse(s.createdAt) ?? DateTime(2000);
-          return s.status == 'completed' &&
-              created.year == today.year &&
-              created.month == today.month &&
-              created.day == today.day;
-        }).length;
+        completedToday.value =
+            parsed.data.where((s) {
+              final created = DateTime.tryParse(s.createdAt) ?? DateTime(2000);
+              return s.status == 'completed' &&
+                  created.year == today.year &&
+                  created.month == today.month &&
+                  created.day == today.day;
+            }).length;
 
         inProgressScans.value =
             parsed.data.where((s) => s.status == 'in_progress').length;

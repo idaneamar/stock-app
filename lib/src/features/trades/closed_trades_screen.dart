@@ -280,24 +280,27 @@ class _ClosedTradesScreenState extends State<ClosedTradesScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.blue.withOpacity(0.3),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                            ),
-                            child: Text(
-                              trade.strategy,
-                              style: const TextStyle(
-                                color: AppColors.blue,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                              decoration: BoxDecoration(
+                                color: AppColors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.blue.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Text(
+                                trade.strategy,
+                                style: const TextStyle(
+                                  color: AppColors.blue,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),

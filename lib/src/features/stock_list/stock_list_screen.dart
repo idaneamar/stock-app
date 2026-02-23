@@ -202,6 +202,7 @@ class ScanAnalysisScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   _buildAnalysisSection(
+                    context: context,
                     title: 'Analysis',
                     status: currentScanData.analysisStatus,
                     controller: controller,
@@ -217,6 +218,7 @@ class ScanAnalysisScreen extends StatelessWidget {
   }
 
   Widget _buildAnalysisSection({
+    required BuildContext context,
     required String title,
     required String? status,
     required StockAnalysisController controller,
@@ -337,123 +339,176 @@ class ScanAnalysisScreen extends StatelessWidget {
           ] else if (status.toLowerCase() == 'completed') ...[
             Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Obx(() {
-                        final isCurrentlyDownloading =
-                            controller.isDownloading.value;
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 480;
 
-                        return ElevatedButton(
-                          onPressed:
-                              isCurrentlyDownloading
-                                  ? null
-                                  : controller.openAnalysisExcel,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.blue,
-                            foregroundColor: AppColors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            disabledBackgroundColor: AppColors.grey,
+                    final btn1 = Obx(() {
+                      final isCurrentlyDownloading =
+                          controller.isDownloading.value;
+                      return ElevatedButton(
+                        onPressed:
+                            isCurrentlyDownloading
+                                ? null
+                                : controller.openAnalysisExcel,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.blue,
+                          foregroundColor: AppColors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child:
-                              isCurrentlyDownloading
-                                  ? const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.white,
-                                              ),
-                                        ),
+                          disabledBackgroundColor: AppColors.grey,
+                        ),
+                        child:
+                            isCurrentlyDownloading
+                                ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.white,
+                                            ),
                                       ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Opening...',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                  : const Text(
-                                    'Open Excel',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
                                     ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Opening...',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                                : const Text(
+                                  'Open Excel',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Obx(() {
-                        final isCurrentlyLoadingTrades =
-                            controller.isLoading.value;
+                                ),
+                      );
+                    });
 
-                        return ElevatedButton(
-                          onPressed:
-                              isCurrentlyLoadingTrades
-                                  ? null
-                                  : controller.scanTrades,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.success,
-                            foregroundColor: AppColors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            disabledBackgroundColor: AppColors.grey,
+                    final btn2 = Obx(() {
+                      final isCurrentlyLoadingTrades =
+                          controller.isLoading.value;
+                      return ElevatedButton(
+                        onPressed:
+                            isCurrentlyLoadingTrades
+                                ? null
+                                : controller.scanTrades,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                          foregroundColor: AppColors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child:
-                              isCurrentlyLoadingTrades
-                                  ? const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.white,
-                                              ),
-                                        ),
+                          disabledBackgroundColor: AppColors.grey,
+                        ),
+                        child:
+                            isCurrentlyLoadingTrades
+                                ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.white,
+                                            ),
                                       ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Loading...',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                  : const Text(
-                                    'Recommendations',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
                                     ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Loading...',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                                : const Text(
+                                  'Recommendations',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                        );
-                      }),
-                    ),
-                  ],
+                                ),
+                      );
+                    });
+
+                    if (isMobile) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [btn1, const SizedBox(height: 12), btn2],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: btn1),
+                        const SizedBox(width: 12),
+                        Expanded(child: btn2),
+                      ],
+                    );
+                  },
                 ),
+                const SizedBox(height: 12),
+                // Ask AI button
+                Obx(() {
+                  final isLoadingAI = controller.isLoadingAI.value;
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          isLoadingAI
+                              ? null
+                              : () => controller.openAiChat(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        disabledBackgroundColor: AppColors.grey300,
+                      ),
+                      icon:
+                          isLoadingAI
+                              ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                              : const Icon(Icons.auto_awesome, size: 18),
+                      label: Text(
+                        isLoadingAI ? 'Loading…' : 'Ask AI',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

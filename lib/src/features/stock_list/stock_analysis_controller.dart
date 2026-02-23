@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stock_app/src/features/ai/ai_chat_panel.dart';
 import 'package:stock_app/src/models/scan_history_response.dart';
 import 'package:stock_app/src/models/trade_response.dart';
 import 'package:stock_app/src/utils/services/api_service.dart';
@@ -24,8 +25,12 @@ class StockAnalysisController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
   final RxBool isDownloading = false.obs;
+  final RxBool isLoadingAI = false.obs;
 
   final RxBool isRestartingAnalysis = false.obs;
+
+  // Cache of loaded trades – reused for AI without a second API call
+  final Rx<TradeData?> cachedTradeData = Rx<TradeData?>(null);
   final RxString errorMessage = ''.obs;
   final RxMap<String, dynamic> analysisResult = <String, dynamic>{}.obs;
   final Rx<ScanHistoryData?> currentScan = Rx<ScanHistoryData?>(null);
@@ -182,6 +187,7 @@ class StockAnalysisController extends GetxController {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final tradeResponse = TradeResponse.fromJson(response.data);
+        cachedTradeData.value = tradeResponse.data;
 
         // Navigate to trades screen
         Get.to(
@@ -196,6 +202,39 @@ class StockAnalysisController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Fetches trades (if not cached) then opens the AI chat panel.
+  Future<void> openAiChat(BuildContext context) async {
+    if (currentScan.value == null) return;
+    final scan = currentScan.value!;
+
+    TradeData? tradeData = cachedTradeData.value;
+
+    if (tradeData == null) {
+      isLoadingAI.value = true;
+      try {
+        final response = await _apiService.getScanTrades(scan.id);
+        if (response.statusCode == 200 && response.data['success'] == true) {
+          tradeData = TradeResponse.fromJson(response.data).data;
+          cachedTradeData.value = tradeData;
+        }
+      } catch (e) {
+        log('AI load trades error: $e');
+      } finally {
+        isLoadingAI.value = false;
+      }
+    }
+
+    if (!context.mounted) return;
+
+    await showAiChatPanel(
+      context,
+      scanId: scan.id,
+      scanDate: scan.createdAt,
+      portfolioSize: tradeData?.portfolioSize,
+      trades: tradeData?.analysis ?? [],
+    );
   }
 
   /// Shows a program-selection dialog, then restarts analysis with the chosen program.
@@ -224,8 +263,9 @@ class StockAnalysisController extends GetxController {
         Get.find<HomeController>().refreshScanHistory();
 
         try {
-          Get.find<MainContainerController>(tag: 'main_container')
-              .changeScreen(0);
+          Get.find<MainContainerController>(
+            tag: 'main_container',
+          ).changeScreen(0);
         } catch (_) {}
         Get.offAll(() => const MainContainerScreen());
       } else {

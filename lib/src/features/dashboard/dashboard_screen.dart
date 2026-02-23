@@ -20,8 +20,7 @@ class DashboardScreen extends StatelessWidget {
       body: RefreshIndicator(
         onRefresh: controller.fetchDashboardData,
         child: Obx(() {
-          if (controller.isLoading.value &&
-              controller.recentScans.isEmpty) {
+          if (controller.isLoading.value && controller.recentScans.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.blue),
             );
@@ -36,19 +35,33 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: UIConstants.spacingXXXL),
                 _buildStatCards(controller),
                 const SizedBox(height: UIConstants.spacingXXXL),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: _buildRecentScans(context, controller),
-                    ),
-                    const SizedBox(width: UIConstants.spacingXXXL),
-                    Expanded(
-                      flex: 2,
-                      child: _buildQuickActions(context, controller),
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 560;
+                    if (isNarrow) {
+                      return Column(
+                        children: [
+                          _buildRecentScans(context, controller),
+                          const SizedBox(height: UIConstants.spacingXXXL),
+                          _buildQuickActions(context, controller),
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _buildRecentScans(context, controller),
+                        ),
+                        const SizedBox(width: UIConstants.spacingXXXL),
+                        Expanded(
+                          flex: 2,
+                          child: _buildQuickActions(context, controller),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -58,16 +71,16 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    DashboardController controller,
-  ) {
+  Widget _buildHeader(BuildContext context, DashboardController controller) {
     final now = DateTime.now();
-    final greeting = now.hour < 12
-        ? 'Good morning'
-        : now.hour < 17
+    final greeting =
+        now.hour < 12
+            ? 'Good morning'
+            : now.hour < 17
             ? 'Good afternoon'
             : 'Good evening';
+
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Row(
       children: [
@@ -78,15 +91,16 @@ class DashboardScreen extends StatelessWidget {
               Text(
                 greeting,
                 style: TextStyle(
-                  fontSize: UIConstants.fontXL,
+                  fontSize: UIConstants.fontL,
                   color: AppColors.grey600,
                 ),
               ),
               const SizedBox(height: UIConstants.spacingS),
-              const Text(
+              Text(
                 'Stock Dashboard',
                 style: TextStyle(
-                  fontSize: UIConstants.fontTitle,
+                  fontSize:
+                      isMobile ? UIConstants.fontXXL : UIConstants.fontTitle,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
@@ -144,31 +158,33 @@ class DashboardScreen extends StatelessWidget {
           ];
           if (isNarrow) {
             return Column(
-              children: cards
-                  .map(
-                    (c) => Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: UIConstants.spacingL,
-                      ),
-                      child: c,
-                    ),
-                  )
-                  .toList(),
+              children:
+                  cards
+                      .map(
+                        (c) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: UIConstants.spacingL,
+                          ),
+                          child: c,
+                        ),
+                      )
+                      .toList(),
             );
           }
           return Row(
-            children: cards
-                .map(
-                  (c) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: UIConstants.spacingL,
+            children:
+                cards
+                    .map(
+                      (c) => Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            right: UIConstants.spacingL,
+                          ),
+                          child: c,
+                        ),
                       ),
-                      child: c,
-                    ),
-                  ),
-                )
-                .toList(),
+                    )
+                    .toList(),
           );
         },
       ),
@@ -215,9 +231,10 @@ class DashboardScreen extends StatelessWidget {
           );
         }
         return Column(
-          children: controller.recentScans
-              .map((scan) => _ScanRow(scan: scan))
-              .toList(),
+          children:
+              controller.recentScans
+                  .map((scan) => _ScanRow(scan: scan))
+                  .toList(),
         );
       }),
     );
@@ -280,25 +297,26 @@ class DashboardScreen extends StatelessWidget {
       showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Stock Filters'),
-          content: ScanFiltersDialogContent(controller: homeCtrl),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+        builder:
+            (dialogContext) => AlertDialog(
+              title: const Text('Stock Filters'),
+              content: ScanFiltersDialogContent(controller: homeCtrl),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    Navigator.of(dialogContext).pop();
+                    await homeCtrl.fetchStocks();
+                    // Switch to scans tab so user can see progress
+                    _navigateTo(1);
+                  },
+                  child: const Text('Run Scan'),
+                ),
+              ],
             ),
-            FilledButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await homeCtrl.fetchStocks();
-                // Switch to scans tab so user can see progress
-                _navigateTo(1);
-              },
-              child: const Text('Run Scan'),
-            ),
-          ],
-        ),
       );
     } catch (_) {
       // HomeController not yet initialized — navigate to scans tab first
@@ -401,11 +419,7 @@ class _SectionCard extends StatelessWidget {
   final Widget child;
   final Widget? action;
 
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    this.action,
-  });
+  const _SectionCard({required this.title, required this.child, this.action});
 
   @override
   Widget build(BuildContext context) {

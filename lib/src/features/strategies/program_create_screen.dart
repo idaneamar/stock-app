@@ -52,12 +52,15 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
           .replaceAll(RegExp(r'^_+|_+$'), '');
 
       final response = await _api.createProgram(
-        jsonDecode(jsonEncode({
-          'program_id': programId,
-          'name': name,
-          'is_baseline': false,
-          'config': <String, dynamic>{},
-        })) as Map<String, dynamic>,
+        jsonDecode(
+              jsonEncode({
+                'program_id': programId,
+                'name': name,
+                'is_baseline': false,
+                'config': <String, dynamic>{},
+              }),
+            )
+            as Map<String, dynamic>,
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Refresh ProgramsController if it's active
@@ -73,10 +76,15 @@ class _ProgramCreateScreenState extends State<ProgramCreateScreen> {
         Navigator.of(context).pop(true);
         return;
       }
-      final errMsg = (response.data is Map)
-          ? (response.data['detail'] ?? response.data['message'] ?? AppStrings.programCreateFailed)
-          : AppStrings.programCreateFailed;
-      log('Create program failed: status=${response.statusCode} data=${response.data}');
+      final errMsg =
+          (response.data is Map)
+              ? (response.data['detail'] ??
+                  response.data['message'] ??
+                  AppStrings.programCreateFailed)
+              : AppStrings.programCreateFailed;
+      log(
+        'Create program failed: status=${response.statusCode} data=${response.data}',
+      );
       if (!mounted) return;
       setState(() {
         _isSaving = false;

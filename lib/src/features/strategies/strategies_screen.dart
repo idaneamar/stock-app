@@ -231,6 +231,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(width: UIConstants.spacingS),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: UIConstants.paddingM,
@@ -243,6 +244,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                     ),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         width: 8,
