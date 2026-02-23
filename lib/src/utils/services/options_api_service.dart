@@ -288,6 +288,22 @@ class OptionsApiService {
     }
   }
 
+  /// Cancel a running script (optsp.py | prefetch_options_datasp.py | fetch_sp500_symbols.py).
+  Future<Map<String, dynamic>> cancelScript({
+    String script = 'optsp.py',
+  }) async {
+    try {
+      final res = await (await _client()).post(
+        '/options/cancel',
+        queryParameters: {'script': script},
+      );
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      log('cancelScript error: ${e.message}');
+      throw _handle(e);
+    }
+  }
+
   Future<Map<String, dynamic>> triggerRunOptsp({
     String? runDate,
     bool cacheOnly = true,

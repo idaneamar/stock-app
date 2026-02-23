@@ -6,6 +6,7 @@ import 'package:stock_app/src/features/options/options_dashboard_controller.dart
 import 'package:stock_app/src/models/options_recommendation.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
+import 'package:stock_app/src/utils/services/options_api_service.dart';
 
 // Colour constants matching the sidebar palette
 const Color _accent = Color(0xFF4F78FF);
@@ -321,13 +322,17 @@ class _MorningBriefing extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Running indicator
+                    // Running indicator — tappable to open activity panel
                     if (hasRunning)
-                      _StatusPill(
-                        icon: Icons.sync_rounded,
-                        label: '${running.length} running…',
-                        color: AppColors.warning,
-                        spinning: true,
+                      _Tappable(
+                        onTap: () => showOptionsActivityPanel(context),
+                        child: _StatusPill(
+                          icon: Icons.sync_rounded,
+                          label: '${running.length} running…',
+                          color: AppColors.warning,
+                          spinning: true,
+                          tooltip: 'Tap to see running jobs & cancel',
+                        ),
                       ),
                   ],
                 ),
@@ -384,8 +389,29 @@ class _MorningBriefing extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Last optsp indicator
-                  if (lastOptsp != null && lastOptsp.isNotEmpty) ...[
+                  // Stop button — visible only while generating
+                  if (isGenerating) ...[
+                    const SizedBox(width: UIConstants.spacingM),
+                    Tooltip(
+                      message: 'Stop optsp',
+                      child: FilledButton(
+                        onPressed: ctrl.cancelGenerating,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: AppColors.white,
+                          padding: const EdgeInsets.all(UIConstants.paddingL),
+                          minimumSize: const Size(48, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              UIConstants.radiusM,
+                            ),
+                          ),
+                        ),
+                        child: const Icon(Icons.stop_rounded, size: 22),
+                      ),
+                    ),
+                  ] else if (lastOptsp != null && lastOptsp.isNotEmpty) ...[
+                    // Last run indicator when idle
                     const SizedBox(width: UIConstants.spacingM),
                     Tooltip(
                       message:
@@ -479,111 +505,358 @@ class _MorningBriefing extends StatelessWidget {
 // SP500 diff dialog
 // ---------------------------------------------------------------------------
 
-class _Sp500DiffDialog extends StatelessWidget {
+class _Sp500DiffDialog extends StatefulWidget {
   final Map<String, dynamic> sp500;
   const _Sp500DiffDialog({required this.sp500});
 
   @override
+  State<_Sp500DiffDialog> createState() => _Sp500DiffDialogState();
+}
+
+class _Sp500DiffDialogState extends State<_Sp500DiffDialog>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabs;
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+  List<String> _allSymbols = [];
+  bool _loadingSymbols = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 2, vsync: this);
+    _tabs.addListener(() => setState(() {}));
+    _fetchSymbols();
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchSymbols() async {
+    setState(() => _loadingSymbols = true);
+    try {
+      final data = await OptionsApiService().getSymbols();
+      if (mounted) {
+        setState(() {
+          _allSymbols = data..sort();
+          _loadingSymbols = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingSymbols = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final added = (sp500['added'] as List?)?.cast<String>() ?? [];
-    final removed = (sp500['removed'] as List?)?.cast<String>() ?? [];
-    final prevCount = sp500['previous_count'];
-    final curCount = sp500['current_count'];
-    final ranAt = sp500['ran_at'];
+    final added = (widget.sp500['added'] as List?)?.cast<String>() ?? [];
+    final removed = (widget.sp500['removed'] as List?)?.cast<String>() ?? [];
+    final prevCount = widget.sp500['previous_count'];
+    final curCount = widget.sp500['current_count'];
+    final ranAt = widget.sp500['ran_at'];
     final ts =
         ranAt != null ? DateTime.tryParse(ranAt.toString())?.toLocal() : null;
     final dateStr =
         ts != null
-            ? '${ts.year}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}  ${ts.hour.toString().padLeft(2, '0')}:${ts.minute.toString().padLeft(2, '0')}'
+            ? '${ts.year}-${ts.month.toString().padLeft(2, '0')}-'
+                '${ts.day.toString().padLeft(2, '0')}  '
+                '${ts.hour.toString().padLeft(2, '0')}:'
+                '${ts.minute.toString().padLeft(2, '0')}'
             : '';
 
-    return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(Icons.list_alt_rounded, color: _accent),
-          SizedBox(width: 8),
-          Text('S&P 500 Update'),
-        ],
+    final filtered =
+        _query.isEmpty
+            ? _allSymbols
+            : _allSymbols
+                .where((s) => s.contains(_query.toUpperCase()))
+                .toList();
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(UIConstants.radiusL),
       ),
-      content: SizedBox(
-        width: 420,
+      child: SizedBox(
+        width: 480,
+        height: 580,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (dateStr.isNotEmpty)
-              Text(
-                'Updated: $dateStr',
-                style: TextStyle(
-                  fontSize: UIConstants.fontS,
-                  color: AppColors.textSecondary,
-                ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 0),
+              child: Row(
+                children: [
+                  const Icon(Icons.list_alt_rounded, color: _accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'S&P 500',
+                          style: TextStyle(
+                            fontSize: UIConstants.fontXXL,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (dateStr.isNotEmpty)
+                          Text(
+                            'Updated: $dateStr'
+                            '${prevCount != null ? '  ·  $prevCount → $curCount symbols' : ''}',
+                            style: const TextStyle(
+                              fontSize: UIConstants.fontS,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
               ),
-            if (prevCount != null && curCount != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                '$prevCount → $curCount symbols',
-                style: const TextStyle(
-                  fontSize: UIConstants.fontL,
-                  fontWeight: FontWeight.w600,
+            ),
+            // Tab bar
+            TabBar(
+              controller: _tabs,
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Changes'),
+                      if (added.isNotEmpty || removed.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF059669,
+                            ).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '+${added.length} / -${removed.length}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: UIConstants.spacingL),
-            if (added.isEmpty && removed.isEmpty)
-              const Text('No changes — same symbols as last week.')
-            else ...[
-              if (added.isNotEmpty) ...[
-                _SectionLabel(
-                  icon: Icons.add_circle_rounded,
-                  label: 'Added (${added.length})',
-                  color: const Color(0xFF059669),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('All Symbols'),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _accent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${_allSymbols.length}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _accent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: UIConstants.spacingM),
-                Wrap(
-                  spacing: UIConstants.spacingS,
-                  runSpacing: UIConstants.spacingS,
-                  children:
-                      added
-                          .map(
-                            (t) => _TickerChip(
-                              ticker: t,
-                              color: const Color(0xFF059669),
+              ],
+              labelColor: _accent,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: _accent,
+            ),
+            const Divider(height: 1),
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabs,
+                children: [
+                  // Tab 0: Changes
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(UIConstants.paddingXL),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (added.isEmpty && removed.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(
+                              top: UIConstants.spacingXXL,
+                            ),
+                            child: Center(
+                              child: Text(
+                                'No changes this week\nSame symbols as before.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                             ),
                           )
-                          .toList(),
-                ),
-                const SizedBox(height: UIConstants.spacingL),
-              ],
-              if (removed.isNotEmpty) ...[
-                _SectionLabel(
-                  icon: Icons.remove_circle_rounded,
-                  label: 'Removed (${removed.length})',
-                  color: AppColors.error,
-                ),
-                const SizedBox(height: UIConstants.spacingM),
-                Wrap(
-                  spacing: UIConstants.spacingS,
-                  runSpacing: UIConstants.spacingS,
-                  children:
-                      removed
-                          .map(
-                            (t) =>
-                                _TickerChip(ticker: t, color: AppColors.error),
-                          )
-                          .toList(),
-                ),
-              ],
-            ],
+                        else ...[
+                          if (added.isNotEmpty) ...[
+                            _SectionLabel(
+                              icon: Icons.add_circle_rounded,
+                              label: 'Added (${added.length})',
+                              color: const Color(0xFF059669),
+                            ),
+                            const SizedBox(height: UIConstants.spacingM),
+                            Wrap(
+                              spacing: UIConstants.spacingS,
+                              runSpacing: UIConstants.spacingS,
+                              children:
+                                  added
+                                      .map(
+                                        (t) => _TickerChip(
+                                          ticker: t,
+                                          color: const Color(0xFF059669),
+                                        ),
+                                      )
+                                      .toList(),
+                            ),
+                            const SizedBox(height: UIConstants.spacingXL),
+                          ],
+                          if (removed.isNotEmpty) ...[
+                            _SectionLabel(
+                              icon: Icons.remove_circle_rounded,
+                              label: 'Removed (${removed.length})',
+                              color: AppColors.error,
+                            ),
+                            const SizedBox(height: UIConstants.spacingM),
+                            Wrap(
+                              spacing: UIConstants.spacingS,
+                              runSpacing: UIConstants.spacingS,
+                              children:
+                                  removed
+                                      .map(
+                                        (t) => _TickerChip(
+                                          ticker: t,
+                                          color: AppColors.error,
+                                        ),
+                                      )
+                                      .toList(),
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Tab 1: All Symbols
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                        child: TextField(
+                          controller: _searchCtrl,
+                          onChanged: (v) => setState(() => _query = v),
+                          decoration: InputDecoration(
+                            hintText: 'Search symbol…',
+                            prefixIcon: const Icon(Icons.search, size: 18),
+                            suffixIcon:
+                                _query.isNotEmpty
+                                    ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 16),
+                                      onPressed: () {
+                                        _searchCtrl.clear();
+                                        setState(() => _query = '');
+                                      },
+                                    )
+                                    : null,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                UIConstants.radiusM,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_loadingSymbols)
+                        const Expanded(
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            itemCount: filtered.length,
+                            separatorBuilder:
+                                (_, __) => const Divider(height: 1),
+                            itemBuilder: (_, i) {
+                              final ticker = filtered[i];
+                              final isAdded = added.contains(ticker);
+                              final isRemoved = removed.contains(ticker);
+                              return ListTile(
+                                dense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                title: Text(
+                                  ticker,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color:
+                                        isAdded
+                                            ? const Color(0xFF059669)
+                                            : isRemoved
+                                            ? AppColors.error
+                                            : AppColors.textPrimary,
+                                  ),
+                                ),
+                                trailing:
+                                    isAdded
+                                        ? const Icon(
+                                          Icons.add_circle_rounded,
+                                          color: Color(0xFF059669),
+                                          size: 16,
+                                        )
+                                        : isRemoved
+                                        ? const Icon(
+                                          Icons.remove_circle_rounded,
+                                          color: AppColors.error,
+                                          size: 16,
+                                        )
+                                        : null,
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
-        ),
-      ],
     );
   }
 }

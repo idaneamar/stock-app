@@ -77,9 +77,11 @@ class OptionsDashboardController extends GetxController {
     generateMessage.value = 'Running optsp — this may take a few minutes…';
     try {
       await _service.triggerRunOptsp(cacheOnly: true);
-      // Poll until we get fresh recommendations (up to 5 minutes)
+      // Poll every 10s for up to 5 min
       for (int i = 0; i < 30; i++) {
         await Future.delayed(const Duration(seconds: 10));
+        // Stop polling if the user cancelled
+        if (generateState.value != OptionsLoadState.loading) return;
         final result = await _service.getRecommendations();
         if (result.recommendations.isNotEmpty) {
           recommendations.assignAll(result.recommendations);
@@ -95,10 +97,21 @@ class OptionsDashboardController extends GetxController {
       generateState.value = OptionsLoadState.success;
       await fetchMorningStatus();
     } catch (e) {
+      if (generateState.value == OptionsLoadState.idle) return; // cancelled
       generateMessage.value = e.toString();
       generateState.value =
           _isOffline(e) ? OptionsLoadState.offline : OptionsLoadState.error;
     }
+  }
+
+  Future<void> cancelGenerating() async {
+    if (generateState.value != OptionsLoadState.loading) return;
+    generateState.value = OptionsLoadState.idle;
+    generateMessage.value = '';
+    try {
+      await _service.cancelScript(script: 'optsp.py');
+    } catch (_) {}
+    await fetchMorningStatus();
   }
 
   // ---------------------------------------------------------------------------

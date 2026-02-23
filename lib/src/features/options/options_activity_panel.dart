@@ -229,10 +229,20 @@ class _OptionsActivitySheetState extends State<_OptionsActivitySheet> {
       itemCount: _logs.length,
       separatorBuilder:
           (_, __) => const Divider(height: 1, color: AppColors.borderLight),
-      itemBuilder: (_, i) => _JobLogTile(entry: _logs[i]),
+      itemBuilder: (_, i) => _JobLogTile(entry: _logs[i], onCancelled: _fetch),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Script name → API parameter mapping
+// ---------------------------------------------------------------------------
+
+const _scriptFileNames = {
+  'Generate Recommendations (optsp)': 'optsp.py',
+  'Prefetch Options Data': 'prefetch_options_datasp.py',
+  'Fetch S&P 500 Symbols': 'fetch_sp500_symbols.py',
+};
 
 // ---------------------------------------------------------------------------
 // Single job entry tile
@@ -240,7 +250,8 @@ class _OptionsActivitySheetState extends State<_OptionsActivitySheet> {
 
 class _JobLogTile extends StatefulWidget {
   final Map<String, dynamic> entry;
-  const _JobLogTile({required this.entry});
+  final VoidCallback? onCancelled;
+  const _JobLogTile({required this.entry, this.onCancelled});
 
   @override
   State<_JobLogTile> createState() => _JobLogTileState();
@@ -248,6 +259,44 @@ class _JobLogTile extends StatefulWidget {
 
 class _JobLogTileState extends State<_JobLogTile> {
   bool _expanded = false;
+  bool _cancelling = false;
+
+  Future<void> _cancelJob(Map<String, dynamic> entry) async {
+    final label = entry['label'] as String? ?? '';
+    final scriptFile = _scriptFileNames[label] ?? entry['script'] as String?;
+    if (scriptFile == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Cancel job?'),
+            content: Text('Stop "$label" now?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('No'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Yes, cancel'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _cancelling = true);
+    try {
+      await OptionsApiService().cancelScript(script: scriptFile);
+      await Future.delayed(const Duration(seconds: 1));
+      widget.onCancelled?.call();
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _cancelling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -355,6 +404,31 @@ class _JobLogTileState extends State<_JobLogTile> {
                   ],
                 ),
                 const SizedBox(width: UIConstants.spacingM),
+                // Cancel button — only for running jobs
+                if (status == 'running') ...[
+                  _cancelling
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : Tooltip(
+                        message: 'Cancel this job',
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () => _cancelJob(widget.entry),
+                          child: const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.cancel_outlined,
+                              size: UIConstants.iconM,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                  const SizedBox(width: UIConstants.spacingS),
+                ],
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
                   size: UIConstants.iconM,
