@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stock_app/src/features/auth/auth_service.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
 import 'package:stock_app/src/utils/route/app_router.dart';
@@ -35,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final input = _controller.text;
     if (input == kAppPassword) {
       setState(() => _loading = true);
+      AuthService.login();
       Get.offAllNamed(Routes.home);
     } else {
       setState(() {
