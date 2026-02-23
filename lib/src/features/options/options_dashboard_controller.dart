@@ -137,6 +137,7 @@ class OptionsDashboardController extends GetxController {
   // Refresh
   // ---------------------------------------------------------------------------
 
+  @override
   void refresh() {
     _loadServerUrl();
     fetchRecommendations();

@@ -255,6 +255,7 @@ class _JobLogTileState extends State<_JobLogTile> {
     final label =
         widget.entry['label'] as String? ?? widget.entry['script'] ?? '?';
     final startedAt = widget.entry['started_at'] as String?;
+    // ignore: unused_local_variable
     final endedAt = widget.entry['ended_at'] as String?;
     final durationS = widget.entry['duration_s'];
     final summary = widget.entry['summary'] as String?;

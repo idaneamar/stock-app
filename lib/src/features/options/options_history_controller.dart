@@ -87,5 +87,6 @@ class OptionsHistoryController extends GetxController {
     return idx > 0;
   }
 
+  @override
   void refresh() => _loadDates();
 }

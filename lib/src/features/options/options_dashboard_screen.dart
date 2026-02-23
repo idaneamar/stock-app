@@ -199,8 +199,9 @@ class _StatusBar extends StatelessWidget {
       final now = DateTime.now();
       final diff = dt.difference(now);
       if (diff.inDays > 0) return 'in ${diff.inDays}d ${diff.inHours % 24}h';
-      if (diff.inHours > 0)
+      if (diff.inHours > 0) {
         return 'in ${diff.inHours}h ${diff.inMinutes % 60}m';
+      }
       return 'in ${diff.inMinutes}m';
     } catch (_) {
       return iso;
@@ -1449,7 +1450,7 @@ class _EmptyState extends StatelessWidget {
             }),
             const SizedBox(height: UIConstants.spacingXXXL),
             FilledButton.icon(
-              onPressed: ctrl.triggerRunOptsp,
+              onPressed: ctrl.generateRecommendations,
               icon: const Icon(Icons.play_arrow_rounded),
               label: const Text('Run Recommendations Now'),
               style: FilledButton.styleFrom(backgroundColor: _accent),
