@@ -25,6 +25,7 @@ class OptionsDashboardScreen extends StatelessWidget {
         children: [
           _Header(ctrl: ctrl),
           _StatusBar(ctrl: ctrl),
+          _MorningBriefing(ctrl: ctrl),
           Expanded(child: _Body(ctrl: ctrl)),
         ],
       ),
@@ -246,6 +247,473 @@ class _Chip extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Morning briefing + Generate button
+// ---------------------------------------------------------------------------
+
+class _MorningBriefing extends StatelessWidget {
+  final OptionsDashboardController ctrl;
+  const _MorningBriefing({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final ms = ctrl.morningStatus.value;
+      final genState = ctrl.generateState.value;
+      final isGenerating = genState == OptionsLoadState.loading;
+
+      final prefetch = ms?['last_prefetch'] as Map<String, dynamic>?;
+      final sp500 = ms?['last_sp500_update'] as Map<String, dynamic>?;
+      final lastOptsp = ms?['last_optsp'] as Map<String, dynamic>?;
+      final running =
+          (ms?['running_jobs'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final hasRunning = running.isNotEmpty;
+
+      return Container(
+        color: AppColors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Status pills row ────────────────────────────────────────────
+            if (ms != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  UIConstants.paddingXXL,
+                  UIConstants.paddingM,
+                  UIConstants.paddingXXL,
+                  UIConstants.paddingS,
+                ),
+                child: Wrap(
+                  spacing: UIConstants.spacingM,
+                  runSpacing: UIConstants.spacingS,
+                  children: [
+                    // Prefetch pill
+                    if (prefetch != null && prefetch.isNotEmpty)
+                      _StatusPill(
+                        icon:
+                            prefetch['ok'] == true
+                                ? Icons.check_circle_outline
+                                : Icons.error_outline,
+                        label: _prefetchLabel(prefetch),
+                        color:
+                            prefetch['ok'] == true
+                                ? const Color(0xFF059669)
+                                : AppColors.error,
+                        tooltip: 'Last prefetch: ${prefetch['summary'] ?? ''}',
+                      ),
+                    // SP500 pill — tappable
+                    if (sp500 != null && sp500.isNotEmpty)
+                      _Tappable(
+                        onTap: () => _showSp500Dialog(context, sp500),
+                        child: _StatusPill(
+                          icon:
+                              sp500['ok'] == true
+                                  ? Icons.list_alt_rounded
+                                  : Icons.error_outline,
+                          label: _sp500Label(sp500),
+                          color:
+                              sp500['ok'] == true ? _accent : AppColors.error,
+                          tooltip: 'Tap to see added / removed symbols',
+                          trailing: const Icon(
+                            Icons.open_in_new,
+                            size: 11,
+                            color: _accent,
+                          ),
+                        ),
+                      ),
+                    // Running indicator
+                    if (hasRunning)
+                      _StatusPill(
+                        icon: Icons.sync_rounded,
+                        label: '${running.length} running…',
+                        color: AppColors.warning,
+                        spinning: true,
+                      ),
+                  ],
+                ),
+              ),
+            const Divider(height: 1),
+            // ── Generate button ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                UIConstants.paddingXXL,
+                UIConstants.paddingL,
+                UIConstants.paddingXXL,
+                UIConstants.paddingL,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed:
+                          isGenerating ? null : ctrl.generateRecommendations,
+                      icon:
+                          isGenerating
+                              ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
+                                ),
+                              )
+                              : const Icon(Icons.bolt_rounded, size: 20),
+                      label: Text(
+                        isGenerating
+                            ? 'Generating recommendations…'
+                            : 'Generate Today\'s Recommendations',
+                        style: const TextStyle(
+                          fontSize: UIConstants.fontL,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor:
+                            isGenerating
+                                ? AppColors.grey300
+                                : const Color(0xFF7C3AED),
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: UIConstants.paddingL,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            UIConstants.radiusM,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Last optsp indicator
+                  if (lastOptsp != null && lastOptsp.isNotEmpty) ...[
+                    const SizedBox(width: UIConstants.spacingM),
+                    Tooltip(
+                      message:
+                          'Last run: ${_formatRelative(lastOptsp['ran_at'])}',
+                      child: Icon(
+                        lastOptsp['ok'] == true
+                            ? Icons.check_circle_rounded
+                            : Icons.warning_rounded,
+                        color:
+                            lastOptsp['ok'] == true
+                                ? const Color(0xFF059669)
+                                : AppColors.warning,
+                        size: 22,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Generate status/progress message
+            Obx(() {
+              final msg = ctrl.generateMessage.value;
+              if (msg.isEmpty) return const SizedBox.shrink();
+              final isErr = ctrl.generateState.value == OptionsLoadState.error;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  UIConstants.paddingXXL,
+                  0,
+                  UIConstants.paddingXXL,
+                  UIConstants.paddingM,
+                ),
+                child: Text(
+                  msg,
+                  style: TextStyle(
+                    fontSize: UIConstants.fontS,
+                    color: isErr ? AppColors.error : AppColors.textSecondary,
+                  ),
+                ),
+              );
+            }),
+            const Divider(height: 1),
+          ],
+        ),
+      );
+    });
+  }
+
+  String _prefetchLabel(Map<String, dynamic> p) {
+    final at = _formatRelative(p['ended_at'] ?? p['ran_at']);
+    if (p['ok'] == true) return 'Prefetch OK · $at';
+    return 'Prefetch failed · $at';
+  }
+
+  String _sp500Label(Map<String, dynamic> s) {
+    final at = _formatRelative(s['ran_at']);
+    final added = (s['added'] as List?)?.length ?? 0;
+    final removed = (s['removed'] as List?)?.length ?? 0;
+    final count = s['current_count'];
+    if (added == 0 && removed == 0) {
+      return 'SP500 · $count symbols · $at';
+    }
+    final parts = <String>[];
+    if (added > 0) parts.add('+$added');
+    if (removed > 0) parts.add('-$removed');
+    return 'SP500 ${parts.join(' ')} · $at';
+  }
+
+  String _formatRelative(dynamic iso) {
+    if (iso == null) return '?';
+    try {
+      final dt = DateTime.parse(iso.toString()).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inDays >= 1) return '${diff.inDays}d ago';
+      if (diff.inHours >= 1) return '${diff.inHours}h ago';
+      if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
+      return 'just now';
+    } catch (_) {
+      return iso.toString();
+    }
+  }
+
+  void _showSp500Dialog(BuildContext context, Map<String, dynamic> sp500) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _Sp500DiffDialog(sp500: sp500),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SP500 diff dialog
+// ---------------------------------------------------------------------------
+
+class _Sp500DiffDialog extends StatelessWidget {
+  final Map<String, dynamic> sp500;
+  const _Sp500DiffDialog({required this.sp500});
+
+  @override
+  Widget build(BuildContext context) {
+    final added = (sp500['added'] as List?)?.cast<String>() ?? [];
+    final removed = (sp500['removed'] as List?)?.cast<String>() ?? [];
+    final prevCount = sp500['previous_count'];
+    final curCount = sp500['current_count'];
+    final ranAt = sp500['ran_at'];
+    final ts =
+        ranAt != null ? DateTime.tryParse(ranAt.toString())?.toLocal() : null;
+    final dateStr =
+        ts != null
+            ? '${ts.year}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}  ${ts.hour.toString().padLeft(2, '0')}:${ts.minute.toString().padLeft(2, '0')}'
+            : '';
+
+    return AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.list_alt_rounded, color: _accent),
+          SizedBox(width: 8),
+          Text('S&P 500 Update'),
+        ],
+      ),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (dateStr.isNotEmpty)
+              Text(
+                'Updated: $dateStr',
+                style: TextStyle(
+                  fontSize: UIConstants.fontS,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            if (prevCount != null && curCount != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '$prevCount → $curCount symbols',
+                style: const TextStyle(
+                  fontSize: UIConstants.fontL,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const SizedBox(height: UIConstants.spacingL),
+            if (added.isEmpty && removed.isEmpty)
+              const Text('No changes — same symbols as last week.')
+            else ...[
+              if (added.isNotEmpty) ...[
+                _SectionLabel(
+                  icon: Icons.add_circle_rounded,
+                  label: 'Added (${added.length})',
+                  color: const Color(0xFF059669),
+                ),
+                const SizedBox(height: UIConstants.spacingM),
+                Wrap(
+                  spacing: UIConstants.spacingS,
+                  runSpacing: UIConstants.spacingS,
+                  children:
+                      added
+                          .map(
+                            (t) => _TickerChip(
+                              ticker: t,
+                              color: const Color(0xFF059669),
+                            ),
+                          )
+                          .toList(),
+                ),
+                const SizedBox(height: UIConstants.spacingL),
+              ],
+              if (removed.isNotEmpty) ...[
+                _SectionLabel(
+                  icon: Icons.remove_circle_rounded,
+                  label: 'Removed (${removed.length})',
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: UIConstants.spacingM),
+                Wrap(
+                  spacing: UIConstants.spacingS,
+                  runSpacing: UIConstants.spacingS,
+                  children:
+                      removed
+                          .map(
+                            (t) =>
+                                _TickerChip(ticker: t, color: AppColors.error),
+                          )
+                          .toList(),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _SectionLabel({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: UIConstants.fontL,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TickerChip extends StatelessWidget {
+  final String ticker;
+  final Color color;
+  const _TickerChip({required this.ticker, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        ticker,
+        style: TextStyle(
+          fontSize: UIConstants.fontS,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+// Small helper for tappable wrappers
+class _Tappable extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _Tappable({required this.child, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) =>
+      GestureDetector(onTap: onTap, child: child);
+}
+
+class _StatusPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final String? tooltip;
+  final bool spinning;
+  final Widget? trailing;
+
+  const _StatusPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.tooltip,
+    this.spinning = false,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget pill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          spinning
+              ? SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: color,
+                ),
+              )
+              : Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: UIConstants.fontS,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+        ],
+      ),
+    );
+    if (tooltip != null) {
+      pill = Tooltip(message: tooltip!, child: pill);
+    }
+    return pill;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Body
 // ---------------------------------------------------------------------------
 
@@ -260,6 +728,10 @@ class _Body extends StatelessWidget {
 
       if (state == OptionsLoadState.loading) {
         return const Center(child: CircularProgressIndicator());
+      }
+
+      if (state == OptionsLoadState.offline) {
+        return _OfflineState(ctrl: ctrl);
       }
 
       if (state == OptionsLoadState.error) {
@@ -993,6 +1465,115 @@ class _EmptyState extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 // Error state
+// ---------------------------------------------------------------------------
+// Offline state — local options server not running
+// ---------------------------------------------------------------------------
+
+class _OfflineState extends StatelessWidget {
+  final OptionsDashboardController ctrl;
+  const _OfflineState({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingXXXL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(UIConstants.paddingXXL),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F0FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.power_off_rounded,
+                size: UIConstants.iconHuge,
+                color: Color(0xFF7C3AED),
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingXXL),
+            const Text(
+              'Options server not running',
+              style: TextStyle(
+                fontSize: UIConstants.fontXXL,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            Obx(
+              () => Text(
+                'Connecting to: ${ctrl.serverUrl.value}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: UIConstants.fontL,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingXXL),
+            Container(
+              padding: const EdgeInsets.all(UIConstants.paddingXL),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E2E),
+                borderRadius: BorderRadius.circular(UIConstants.radiusM),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '# Start the options server on your Mac:',
+                    style: TextStyle(color: Color(0xFF6272A4), fontSize: 12),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'cd /Volumes/Extreme\\ Pro/App\\ gpt/stock_api-main_updated',
+                    style: TextStyle(
+                      color: Color(0xFF50FA7B),
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'python run_options_server.py --run-now',
+                    style: TextStyle(
+                      color: Color(0xFF50FA7B),
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '# --run-now triggers today\'s jobs immediately',
+                    style: TextStyle(color: Color(0xFF6272A4), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingXXL),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FilledButton.icon(
+                  onPressed: ctrl.refresh,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF7C3AED),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 class _ErrorState extends StatelessWidget {

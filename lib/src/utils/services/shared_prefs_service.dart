@@ -7,6 +7,8 @@ class SharedPrefsService {
   static const String _lastScanResponseKey = 'last_scan_response';
   static const String _useVixFilterKey = 'use_vix_filter';
   static const String _activeProgramIdKey = 'active_program_id';
+  static const String _optionsServerUrlKey = 'options_server_url';
+  static const String defaultOptionsServerUrl = 'http://localhost:8001/';
 
   static Future<void> saveScanId(int scanId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -70,5 +72,19 @@ class SharedPrefsService {
   /// Clears active program (e.g. after strategy changes). Persists empty so "No Program" is restored.
   static Future<void> clearActiveProgramId() async {
     await setActiveProgramId('');
+  }
+
+  /// URL of the local options server (e.g. http://localhost:8001/).
+  /// Defaults to localhost:8001 which is where run_options_server.py listens.
+  static Future<void> setOptionsServerUrl(String url) async {
+    var normalized = url.trim();
+    if (!normalized.endsWith('/')) normalized = '$normalized/';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_optionsServerUrlKey, normalized);
+  }
+
+  static Future<String> getOptionsServerUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_optionsServerUrlKey) ?? defaultOptionsServerUrl;
   }
 }

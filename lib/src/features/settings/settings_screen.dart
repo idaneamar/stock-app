@@ -90,6 +90,9 @@ class SettingsScreen extends StatelessWidget {
             _buildEditButton(context),
             const SizedBox(height: UIConstants.spacingXL),
             _buildEngineSettingsCard(context),
+            const SizedBox(height: UIConstants.spacingL),
+            _buildOptionsServerCard(context),
+            const SizedBox(height: UIConstants.spacingXXXL),
           ],
         ),
       ),
@@ -299,6 +302,114 @@ class SettingsScreen extends StatelessWidget {
                       controller.isUpdating.value
                           ? AppColors.grey300
                           : AppColors.blue,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: UIConstants.paddingL,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionsServerCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: AppPadding.allXL,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(UIConstants.radiusL),
+        border: Border.all(color: AppColors.grey300),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.grey.withValues(alpha: 0.1),
+            blurRadius: UIConstants.elevationXL,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.cable, color: Color(0xFF7C3AED), size: 22),
+              const SizedBox(width: UIConstants.spacingM),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Options Local Server',
+                      style: TextStyle(
+                        fontSize: UIConstants.fontXL,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'URL of the local server running run_options_server.py',
+                      style: TextStyle(fontSize: 12, color: AppColors.grey600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          const Divider(),
+          const SizedBox(height: UIConstants.spacingM),
+          AppTextField(
+            label: 'Server URL (e.g. http://localhost:8001/)',
+            controller: controller.optionsServerUrlCtrl,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Keep localhost:8001 if using the same machine. '
+            'Set your Mac\'s local IP (e.g. http://192.168.1.x:8001/) '
+            'to access from other devices on the same network.',
+            style: TextStyle(fontSize: 11, color: AppColors.grey600),
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          Obx(
+            () => SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed:
+                    controller.optionsServerSaving.value
+                        ? null
+                        : () => controller.saveOptionsServerUrl(context),
+                icon: Icon(
+                  Icons.save,
+                  color:
+                      controller.optionsServerSaving.value
+                          ? AppColors.grey
+                          : AppColors.white,
+                ),
+                label: Text(
+                  controller.optionsServerSaving.value
+                      ? 'Saving…'
+                      : 'Save Server URL',
+                  style: TextStyle(
+                    color:
+                        controller.optionsServerSaving.value
+                            ? AppColors.grey
+                            : AppColors.white,
+                    fontSize: UIConstants.fontL,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      controller.optionsServerSaving.value
+                          ? AppColors.grey300
+                          : const Color(0xFF7C3AED),
                   padding: const EdgeInsets.symmetric(
                     vertical: UIConstants.paddingL,
                   ),

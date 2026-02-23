@@ -8,6 +8,7 @@ import 'package:stock_app/src/models/settings_response.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/handlers/ui_feedback.dart';
 import 'package:stock_app/src/utils/services/api_service.dart';
+import 'package:stock_app/src/utils/services/options_api_service.dart';
 import 'package:stock_app/src/utils/services/shared_prefs_service.dart';
 
 class SettingsController extends GetxController {
@@ -28,12 +29,17 @@ class SettingsController extends GetxController {
   final RxBool useIntraday = false.obs;
   final dailyLossLimitCtrl = TextEditingController(text: '0.02');
 
+  // Options local server URL
+  final optionsServerUrlCtrl = TextEditingController();
+  final RxBool optionsServerSaving = false.obs;
+
   SettingsController({ApiService? apiService})
     : _apiService = apiService ?? ApiService();
 
   @override
   void onClose() {
     dailyLossLimitCtrl.dispose();
+    optionsServerUrlCtrl.dispose();
     super.onClose();
   }
 
@@ -43,6 +49,8 @@ class SettingsController extends GetxController {
     Future.microtask(() async {
       await fetchSettings();
       useVixFilter.value = await SharedPrefsService.getUseVixFilter();
+      optionsServerUrlCtrl.text =
+          await SharedPrefsService.getOptionsServerUrl();
       if (!isClosed) isInitialLoading.value = false;
     });
   }
@@ -169,6 +177,29 @@ class SettingsController extends GetxController {
       );
     } finally {
       isUpdating.value = false;
+    }
+  }
+
+  Future<void> saveOptionsServerUrl(BuildContext? context) async {
+    final url = optionsServerUrlCtrl.text.trim();
+    if (url.isEmpty) return;
+    optionsServerSaving.value = true;
+    try {
+      await SharedPrefsService.setOptionsServerUrl(url);
+      optionsServerUrlCtrl.text =
+          await SharedPrefsService.getOptionsServerUrl();
+      OptionsApiService.resetClient();
+      if (context != null && context.mounted) {
+        UiFeedback.showSnackBar(
+          context,
+          message: 'Options server URL saved.',
+          type: UiMessageType.success,
+        );
+      }
+    } catch (e) {
+      log('Error saving options server URL: $e');
+    } finally {
+      optionsServerSaving.value = false;
     }
   }
 
