@@ -275,6 +275,20 @@ class _RobustExcelViewerState extends State<RobustExcelViewer> {
     }
   }
 
+  String _formatWithCommas(double value) {
+    final parts = value.toStringAsFixed(2).split('.');
+    final intPart = parts[0];
+    final decPart = parts[1];
+    final buffer = StringBuffer();
+    for (int i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(intPart[i]);
+    }
+    return '${buffer.toString()}.$decPart';
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -602,7 +616,7 @@ class _RobustExcelViewerState extends State<RobustExcelViewer> {
                   ),
                 ),
                 Text(
-                  '\$${totalInvestment.toStringAsFixed(2)}',
+                  '\$${_formatWithCommas(totalInvestment)}',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

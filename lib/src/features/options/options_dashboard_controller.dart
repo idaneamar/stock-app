@@ -170,9 +170,11 @@ class OptionsDashboardController extends GetxController {
         recDate: currentDate.value.isNotEmpty ? currentDate.value : null,
         dryRun: dryRun,
       );
+      final ok = result['ok'] == true;
       executeMessage.value = (result['message'] as String?) ?? 'Done';
-      executeState.value = OptionsLoadState.success;
-      return result['ok'] == true;
+      executeState.value =
+          ok ? OptionsLoadState.success : OptionsLoadState.error;
+      return ok;
     } catch (e) {
       executeMessage.value = e.toString();
       executeState.value = OptionsLoadState.error;
@@ -192,9 +194,11 @@ class OptionsDashboardController extends GetxController {
         tickers: [rec.ticker],
         dryRun: dryRun,
       );
+      final ok = result['ok'] == true;
       executeMessage.value = (result['message'] as String?) ?? 'Done';
-      executeState.value = OptionsLoadState.success;
-      return result['ok'] == true;
+      executeState.value =
+          ok ? OptionsLoadState.success : OptionsLoadState.error;
+      return ok;
     } catch (e) {
       executeMessage.value = e.toString();
       executeState.value = OptionsLoadState.error;
