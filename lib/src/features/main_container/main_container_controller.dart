@@ -2,11 +2,14 @@ import 'package:get/get.dart';
 import 'package:stock_app/src/features/dashboard/dashboard_controller.dart';
 import 'package:stock_app/src/features/excel/all_excel_controller.dart';
 import 'package:stock_app/src/features/home/home_controller.dart';
+import 'package:stock_app/src/features/options/options_dashboard_controller.dart';
+import 'package:stock_app/src/features/options/options_history_controller.dart';
 import 'package:stock_app/src/features/settings/settings_controller.dart';
 import 'package:stock_app/src/features/trades/full_active_trades_controller.dart';
 
 /// Screen indices used throughout the app.
 class ScreenIndex {
+  // ── Stocks mode ────────────────────────────────────────────────────────────
   static const int dashboard = 0;
   static const int scans = 1;
   static const int programs = 2;
@@ -17,7 +20,11 @@ class ScreenIndex {
   static const int recommendations = 7;
   static const int settings = 8;
 
-  static const int total = 9;
+  // ── Options mode ───────────────────────────────────────────────────────────
+  static const int optionsDashboard = 9;
+  static const int optionsHistory = 10;
+
+  static const int total = 11;
 }
 
 class MainContainerController extends GetxController {
@@ -46,6 +53,10 @@ class MainContainerController extends GetxController {
           Get.find<FullActiveTradesController>().refreshFullActiveTrades();
         case ScreenIndex.settings:
           Get.find<SettingsController>().refreshSettings();
+        case ScreenIndex.optionsDashboard:
+          Get.find<OptionsDashboardController>().refresh();
+        case ScreenIndex.optionsHistory:
+          Get.find<OptionsHistoryController>().refresh();
       }
     } catch (_) {
       // Controller might not be initialised yet — that is fine.

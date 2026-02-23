@@ -7,6 +7,8 @@ import 'package:stock_app/src/features/main_container/main_container_controller.
 import 'package:stock_app/src/features/programs/programs_screen.dart';
 import 'package:stock_app/src/features/settings/settings_screen.dart';
 import 'package:stock_app/src/features/strategies/strategies_screen.dart';
+import 'package:stock_app/src/features/options/options_dashboard_screen.dart';
+import 'package:stock_app/src/features/options/options_history_screen.dart';
 import 'package:stock_app/src/features/trades/closed_trades_screen.dart';
 import 'package:stock_app/src/features/trades/full_active_trades_screen.dart';
 import 'package:stock_app/src/features/trades/open_trades_screen.dart';
@@ -86,10 +88,16 @@ const List<_NavItem> _stocksNavItems = [
 
 const List<_NavItem> _optionsNavItems = [
   _NavItem(
-    index: ScreenIndex.dashboard,
-    icon: Icons.dashboard_outlined,
-    activeIcon: Icons.dashboard_rounded,
-    label: 'Dashboard',
+    index: ScreenIndex.optionsDashboard,
+    icon: Icons.auto_awesome_outlined,
+    activeIcon: Icons.auto_awesome,
+    label: 'Recommendations',
+  ),
+  _NavItem(
+    index: ScreenIndex.optionsHistory,
+    icon: Icons.history_rounded,
+    activeIcon: Icons.history_rounded,
+    label: 'History',
   ),
 ];
 
@@ -181,6 +189,10 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
         return FullActiveTradesScreen();
       case ScreenIndex.settings:
         return SettingsScreen();
+      case ScreenIndex.optionsDashboard:
+        return const OptionsDashboardScreen();
+      case ScreenIndex.optionsHistory:
+        return const OptionsHistoryScreen();
       default:
         return const SizedBox.shrink();
     }
@@ -272,7 +284,7 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   String _labelForIndex(int idx) {
-    const all = [..._stocksNavItems, _settingsNavItem];
+    const all = [..._stocksNavItems, ..._optionsNavItems, _settingsNavItem];
     for (final item in all) {
       if (item.index == idx) return item.label;
     }
@@ -401,7 +413,7 @@ class _AppSidebar extends StatelessWidget {
                 isActive: !isStocks,
                 onTap: () {
                   modeCtrl.setMode(TradingMode.options);
-                  onNavTap(ScreenIndex.dashboard);
+                  onNavTap(ScreenIndex.optionsDashboard);
                 },
               ),
             ],
@@ -428,28 +440,6 @@ class _AppSidebar extends StatelessWidget {
               onTap: () => onNavTap(item.index),
             ),
           ),
-          if (modeCtrl.isOptions)
-            Padding(
-              padding: const EdgeInsets.all(UIConstants.paddingXXL),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.construction_rounded,
-                    color: _sidebarTextColor,
-                    size: 32,
-                  ),
-                  const SizedBox(height: UIConstants.spacingL),
-                  const Text(
-                    'Options trading\ncoming soon',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _sidebarTextColor,
-                      fontSize: UIConstants.fontL,
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       );
     });
