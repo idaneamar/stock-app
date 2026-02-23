@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stock_app/src/features/options/options_activity_panel.dart';
 import 'package:stock_app/src/features/options/options_ai_panel.dart';
 import 'package:stock_app/src/features/options/options_dashboard_controller.dart';
 import 'package:stock_app/src/models/options_recommendation.dart';
@@ -88,6 +89,13 @@ class _Header extends StatelessWidget {
                 }),
               ],
             ),
+          ),
+          // System Activity log
+          IconButton(
+            onPressed: () => showOptionsActivityPanel(context),
+            icon: const Icon(Icons.terminal_rounded),
+            tooltip: 'System Activity Log',
+            color: AppColors.textSecondary,
           ),
           // Ask AI
           Obx(() {

@@ -121,6 +121,27 @@ class OptionsApiService {
   }
 
   // ---------------------------------------------------------------------------
+  // Job logs
+  // ---------------------------------------------------------------------------
+
+  /// Returns the most recent script execution logs (newest first).
+  Future<List<Map<String, dynamic>>> getJobLogs({int limit = 50}) async {
+    try {
+      final res = await _client.dio.get(
+        '/options/job-logs',
+        queryParameters: {'limit': limit},
+      );
+      final data = res.data as Map<String, dynamic>;
+      return ((data['logs'] as List?) ?? [])
+          .map((e) => e as Map<String, dynamic>)
+          .toList();
+    } on DioException catch (e) {
+      log('getJobLogs error: ${e.message}');
+      throw _client.handleError(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // AI data endpoints
   // ---------------------------------------------------------------------------
 

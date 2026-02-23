@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stock_app/src/features/options/options_activity_panel.dart';
 import 'package:stock_app/src/features/options/options_ai_panel.dart';
 import 'package:stock_app/src/features/options/options_dashboard_screen.dart'
     show IronCondorCard;
@@ -73,6 +74,13 @@ class _HistoryHeader extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
+          ),
+          // System Activity log
+          IconButton(
+            onPressed: () => showOptionsActivityPanel(context),
+            icon: const Icon(Icons.terminal_rounded),
+            tooltip: 'System Activity Log',
+            color: AppColors.textSecondary,
           ),
           // Ask AI
           Obx(() {
