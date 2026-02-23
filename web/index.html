@@ -34,6 +34,14 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    // Unregister any cached service workers so the app always loads fresh
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var r of registrations) { r.unregister(); }
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
