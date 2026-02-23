@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/controllers/trading_mode_controller.dart';
 import 'package:stock_app/src/utils/route/app_router.dart';
-import 'package:stock_app/src/utils/colors/app_colors.dart';
 
 void main() {
   Get.put(TradingModeController(), permanent: true);
@@ -31,7 +31,7 @@ class StockApp extends StatelessWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.light,
-      initialRoute: Routes.home,
+      initialRoute: Routes.login,
       getPages: getPages,
       unknownRoute: GetPage(
         name: Routes.notFound,
