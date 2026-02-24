@@ -1230,6 +1230,7 @@ class IronCondorCard extends StatelessWidget {
   final OptionsRecommendation rec;
   final int rank;
   final VoidCallback? onExecute;
+  final VoidCallback? onDelete;
   final bool readOnly;
 
   const IronCondorCard({
@@ -1237,6 +1238,7 @@ class IronCondorCard extends StatelessWidget {
     required this.rec,
     required this.rank,
     this.onExecute,
+    this.onDelete,
     this.readOnly = false,
   });
 
@@ -1380,20 +1382,41 @@ class IronCondorCard extends StatelessWidget {
               ],
             ),
 
-            // ── Row 5: execute button (live mode only) ────────────────────
-            if (!readOnly && onExecute != null) ...[
+            // ── Row 5: action buttons ─────────────────────────────────────
+            if (!readOnly && onExecute != null || onDelete != null) ...[
               const SizedBox(height: UIConstants.spacingXL),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  onPressed: onExecute,
-                  icon: const Icon(Icons.send_rounded, size: UIConstants.iconM),
-                  label: const Text('Send to IBKR'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _accent,
-                    side: const BorderSide(color: _accent),
-                  ),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (!readOnly && onExecute != null)
+                    OutlinedButton.icon(
+                      onPressed: onExecute,
+                      icon: const Icon(
+                        Icons.send_rounded,
+                        size: UIConstants.iconM,
+                      ),
+                      label: const Text('Send to IBKR'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _accent,
+                        side: const BorderSide(color: _accent),
+                      ),
+                    ),
+                  if (onDelete != null) ...[
+                    const SizedBox(width: UIConstants.spacingM),
+                    OutlinedButton.icon(
+                      onPressed: onDelete,
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: UIConstants.iconM,
+                      ),
+                      label: const Text('Delete'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: BorderSide(color: AppColors.error),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ],

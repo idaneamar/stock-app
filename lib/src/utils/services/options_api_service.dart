@@ -147,6 +147,32 @@ class OptionsApiService {
   }
 
   // ---------------------------------------------------------------------------
+  // Delete recommendations
+  // ---------------------------------------------------------------------------
+
+  /// Delete all recommendations for a date (removes the CSV file on the server).
+  Future<void> deleteRecommendationDate(String date) async {
+    try {
+      await (await _client()).delete('/options/recommendations/$date');
+    } on DioException catch (e) {
+      log('deleteRecommendationDate error: ${e.message}');
+      throw _handle(e);
+    }
+  }
+
+  /// Remove a single ticker from a date's recommendation file.
+  Future<void> deleteRecommendationTicker(String date, String ticker) async {
+    try {
+      await (await _client()).delete(
+        '/options/recommendations/$date/${ticker.toUpperCase()}',
+      );
+    } on DioException catch (e) {
+      log('deleteRecommendationTicker error: ${e.message}');
+      throw _handle(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // AI Chat
   // ---------------------------------------------------------------------------
 

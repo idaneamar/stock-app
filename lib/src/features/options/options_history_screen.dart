@@ -24,6 +24,7 @@ class OptionsHistoryScreen extends StatelessWidget {
         children: [
           _HistoryHeader(ctrl: ctrl),
           _DateNavigator(ctrl: ctrl),
+          _ExecuteBar(ctrl: ctrl),
           _TickerFilter(ctrl: ctrl),
           Expanded(child: _HistoryBody(ctrl: ctrl)),
         ],
@@ -75,14 +76,12 @@ class _HistoryHeader extends StatelessWidget {
               ),
             ),
           ),
-          // System Activity log
           IconButton(
             onPressed: () => showOptionsActivityPanel(context),
             icon: const Icon(Icons.terminal_rounded),
             tooltip: 'System Activity Log',
             color: AppColors.textSecondary,
           ),
-          // Ask AI
           Obx(() {
             final hasRecs = ctrl.recommendations.isNotEmpty;
             return OutlinedButton.icon(
@@ -118,7 +117,7 @@ class _HistoryHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Date navigator
+// Date navigator  +  Delete day button
 // ---------------------------------------------------------------------------
 
 class _DateNavigator extends StatelessWidget {
@@ -200,6 +199,18 @@ class _DateNavigator extends StatelessWidget {
               ),
             ),
           ),
+
+          // Delete entire day
+          Obx(() {
+            final date = ctrl.selectedDate.value;
+            if (date.isEmpty) return const SizedBox.shrink();
+            return IconButton(
+              onPressed: () => _confirmDeleteDay(context, ctrl, date),
+              icon: const Icon(Icons.delete_sweep_rounded),
+              tooltip: 'Delete all recommendations for $date',
+              style: IconButton.styleFrom(foregroundColor: AppColors.error),
+            );
+          }),
         ],
       ),
     );
@@ -220,6 +231,37 @@ class _DateNavigator extends StatelessWidget {
     );
     if (selected != null && selected != ctrl.selectedDate.value) {
       ctrl.loadDate(selected);
+    }
+  }
+
+  Future<void> _confirmDeleteDay(
+    BuildContext context,
+    OptionsHistoryController ctrl,
+    String date,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Delete All Recommendations'),
+            content: Text(
+              'Delete all recommendations for $date?\nThis cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed == true) {
+      await ctrl.deleteDate(date);
     }
   }
 }
@@ -269,6 +311,84 @@ class _DatePickerDialog extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Execute bar  (Execute All + status message)
+// ---------------------------------------------------------------------------
+
+class _ExecuteBar extends StatelessWidget {
+  final OptionsHistoryController ctrl;
+  const _ExecuteBar({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final hasRecs = ctrl.recommendations.isNotEmpty;
+      if (!hasRecs) return const SizedBox.shrink();
+
+      return Container(
+        color: AppColors.white,
+        padding: const EdgeInsets.fromLTRB(
+          UIConstants.paddingXXL,
+          0,
+          UIConstants.paddingXXL,
+          UIConstants.paddingL,
+        ),
+        child: Row(
+          children: [
+            Obx(() {
+              final loading = ctrl.isExecuting.value;
+              return FilledButton.icon(
+                onPressed: loading ? null : ctrl.executeAll,
+                icon:
+                    loading
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(
+                          Icons.send_rounded,
+                          size: UIConstants.iconM,
+                        ),
+                label: Text('Execute All (${ctrl.selectedDate.value})'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: _accent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.paddingXXL,
+                    vertical: UIConstants.paddingM,
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(width: UIConstants.spacingXL),
+            Obx(() {
+              final msg = ctrl.executeMessage.value;
+              if (msg.isEmpty) return const SizedBox.shrink();
+              return Expanded(
+                child: Text(
+                  msg,
+                  style: TextStyle(
+                    color:
+                        ctrl.executeOk.value
+                            ? AppColors.success
+                            : AppColors.error,
+                    fontSize: UIConstants.fontL,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -420,12 +540,86 @@ class _HistoryBody extends StatelessWidget {
       return ListView.builder(
         padding: const EdgeInsets.all(UIConstants.paddingXXL),
         itemCount: recs.length,
-        itemBuilder:
-            (context, i) => Padding(
-              padding: const EdgeInsets.only(bottom: UIConstants.paddingL),
-              child: IronCondorCard(rec: recs[i], rank: i + 1, readOnly: true),
+        itemBuilder: (context, i) {
+          final rec = recs[i];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: UIConstants.paddingL),
+            child: IronCondorCard(
+              rec: rec,
+              rank: i + 1,
+              onExecute:
+                  ctrl.isExecuting.value
+                      ? null
+                      : () => _confirmExecuteSingle(context, ctrl, rec),
+              onDelete: () => _confirmDeleteRec(context, ctrl, rec),
             ),
+          );
+        },
       );
     });
+  }
+
+  Future<void> _confirmExecuteSingle(
+    BuildContext context,
+    OptionsHistoryController ctrl,
+    dynamic rec,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: Text('Send ${rec.ticker} to IBKR'),
+            content: Text(
+              'Execute iron condor for ${rec.ticker} '
+              '(${ctrl.selectedDate.value}) via IBKR?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: _accent),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Send to IBKR'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed == true) {
+      await ctrl.executeSingle(rec);
+    }
+  }
+
+  Future<void> _confirmDeleteRec(
+    BuildContext context,
+    OptionsHistoryController ctrl,
+    dynamic rec,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: Text('Delete ${rec.ticker}'),
+            content: Text(
+              'Remove ${rec.ticker} from ${ctrl.selectedDate.value} recommendations?\n'
+              'This cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed == true) {
+      await ctrl.deleteRecommendation(rec);
+    }
   }
 }
