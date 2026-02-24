@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
+import 'package:stock_app/src/utils/formatters/number_format.dart';
 
 class OrderPrepareSummaryBar extends StatelessWidget {
   final int totalOrders;
@@ -36,7 +37,7 @@ class OrderPrepareSummaryBar extends StatelessWidget {
                 ),
               ),
               Text(
-                '${AppStrings.totalInvestment} \$${totalInvestment.toStringAsFixed(2)}',
+                '${AppStrings.totalInvestment} ${formatUsd(totalInvestment, fractionDigits: 2)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
+import 'package:stock_app/src/utils/formatters/number_format.dart';
 
 class AnalysisTradesSummary extends StatelessWidget {
   final String analyzedAt;
@@ -33,7 +34,7 @@ class AnalysisTradesSummary extends StatelessWidget {
           ),
           const SizedBox(height: UIConstants.spacingXS),
           Text(
-            '${AppStrings.totalInvestment} \$${totalInvestment.toStringAsFixed(2)}',
+            '${AppStrings.totalInvestment} ${formatUsd(totalInvestment, fractionDigits: 2)}',
             style: const TextStyle(
               color: AppColors.green,
               fontWeight: FontWeight.bold,

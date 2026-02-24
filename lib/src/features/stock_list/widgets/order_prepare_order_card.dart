@@ -5,6 +5,7 @@ import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
 import 'package:stock_app/src/features/stock_list/widgets/order_prepare_info_item.dart';
 import 'package:stock_app/src/features/stock_list/widgets/order_prepare_position_editor.dart';
+import 'package:stock_app/src/utils/formatters/number_format.dart';
 
 class OrderPrepareOrderCard extends StatelessWidget {
   final OrderItem order;
@@ -129,7 +130,7 @@ class OrderPrepareOrderCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '\$${order.currentInvestment.toStringAsFixed(2)}',
+                        formatUsd(order.currentInvestment, fractionDigits: 2),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -148,7 +149,7 @@ class OrderPrepareOrderCard extends StatelessWidget {
               Expanded(
                 child: OrderPrepareInfoItem(
                   label: AppStrings.entryPrice,
-                  value: '\$${order.entryPrice.toStringAsFixed(2)}',
+                  value: formatUsd(order.entryPrice, fractionDigits: 2),
                 ),
               ),
               Expanded(
