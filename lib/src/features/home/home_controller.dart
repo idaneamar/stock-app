@@ -23,7 +23,7 @@ class HomeController extends GetxController {
   final minAvgTransactionValueCtrl = TextEditingController(text: '150000');
   final minVolatilityCtrl = TextEditingController(text: '0.4');
   final minPriceCtrl = TextEditingController(text: '2');
-  final topNStocksCtrl = TextEditingController(text: '500');
+  final topNStocksCtrl = TextEditingController(text: '1000');
   final RxList<Map<String, dynamic>> programs = <Map<String, dynamic>>[].obs;
   final RxString selectedProgramId = ''.obs;
 
