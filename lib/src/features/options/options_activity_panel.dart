@@ -480,6 +480,10 @@ class _JobLogTileState extends State<_JobLogTile> {
         return Icons.error_outline_rounded;
       case 'timeout':
         return Icons.timer_off_outlined;
+      case 'cancelled':
+        return Icons.stop_circle_outlined;
+      case 'interrupted':
+        return Icons.pause_circle_outline;
       default:
         return Icons.help_outline_rounded;
     }
@@ -495,6 +499,10 @@ class _JobLogTileState extends State<_JobLogTile> {
         return AppColors.error;
       case 'timeout':
         return AppColors.warning;
+      case 'cancelled':
+        return AppColors.warning;
+      case 'interrupted':
+        return AppColors.grey600;
       default:
         return AppColors.grey500;
     }

@@ -22,6 +22,7 @@ class OptionsDashboardController extends GetxController {
   final RxString executeMessage = ''.obs;
   final RxString generateMessage = ''.obs;
   final RxString serverUrl = ''.obs;
+  final RxString currentJobId = ''.obs;
 
   /// Morning briefing data (last prefetch, sp500 update, etc.)
   final Rxn<Map<String, dynamic>> morningStatus = Rxn<Map<String, dynamic>>();
@@ -76,12 +77,57 @@ class OptionsDashboardController extends GetxController {
     generateState.value = OptionsLoadState.loading;
     generateMessage.value = 'Running optsp — this may take a few minutes…';
     try {
-      await _service.triggerRunOptsp(cacheOnly: true);
-      // Poll every 10s for up to 5 min
-      for (int i = 0; i < 30; i++) {
-        await Future.delayed(const Duration(seconds: 10));
-        // Stop polling if the user cancelled
-        if (generateState.value != OptionsLoadState.loading) return;
+      final start = await _service.triggerRunOptsp(cacheOnly: true);
+      if (start['already_running'] == true) {
+        generateMessage.value =
+            'optsp is already running — open Activity to view';
+        generateState.value = OptionsLoadState.success;
+        await fetchMorningStatus();
+        return;
+      }
+      currentJobId.value = (start['job_id'] as String?) ?? '';
+
+      // Poll every 5s for up to 10 min: prefer job logs (truth), then refresh recs.
+      for (int i = 0; i < 120; i++) {
+        await Future.delayed(const Duration(seconds: 5));
+        if (generateState.value != OptionsLoadState.loading)
+          return; // cancelled
+
+        // Pull recent job logs and look for our job id.
+        final logs = await _service.getJobLogs(limit: 60);
+        final jobId = currentJobId.value;
+        final entry =
+            jobId.isEmpty
+                ? null
+                : logs.cast<Map<String, dynamic>>().firstWhere(
+                  (e) => (e['id']?.toString() ?? '') == jobId,
+                  orElse: () => <String, dynamic>{},
+                );
+
+        if (entry != null && entry.isNotEmpty) {
+          final status = (entry['status']?.toString() ?? '').toLowerCase();
+          if (status.isNotEmpty && status != 'running') {
+            final ok = entry['ok'] == true;
+            final summary = (entry['summary']?.toString() ?? '').trim();
+            generateMessage.value =
+                ok
+                    ? (summary.isNotEmpty
+                        ? summary
+                        : 'Recommendations generated')
+                    : (summary.isNotEmpty
+                        ? summary
+                        : 'optsp failed — open Activity for details');
+
+            // Refresh morning status + recs when done (even on failure).
+            await fetchMorningStatus();
+            await fetchRecommendations();
+            generateState.value =
+                ok ? OptionsLoadState.success : OptionsLoadState.error;
+            return;
+          }
+        }
+
+        // Fallback: if recommendations already exist for today, show them.
         final result = await _service.getRecommendations();
         if (result.recommendations.isNotEmpty) {
           recommendations.assignAll(result.recommendations);
@@ -93,8 +139,10 @@ class OptionsDashboardController extends GetxController {
           return;
         }
       }
-      generateMessage.value = 'optsp finished — no recommendations for today';
-      generateState.value = OptionsLoadState.success;
+
+      generateMessage.value =
+          'Timed out waiting for optsp — open Activity to see logs';
+      generateState.value = OptionsLoadState.error;
       await fetchMorningStatus();
     } catch (e) {
       if (generateState.value == OptionsLoadState.idle) return; // cancelled
