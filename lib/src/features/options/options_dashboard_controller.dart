@@ -164,11 +164,19 @@ class OptionsDashboardController extends GetxController {
       }
       currentJobId.value = (start['job_id'] as String?) ?? '';
 
-      // Poll every 5s for up to 10 min: prefer job logs (truth), then refresh recs.
-      for (int i = 0; i < 120; i++) {
+      // Poll every 5s for up to 35 min (backend timeout is 30 min).
+      // Each iteration checks job logs first, then falls back to recs.
+      for (int i = 0; i < 420; i++) {
         await Future.delayed(const Duration(seconds: 5));
         if (generateState.value != OptionsLoadState.loading) {
           return; // cancelled
+        }
+
+        // Update status message with elapsed time every 12 polls (~1 min).
+        if (i > 0 && i % 12 == 0) {
+          final elapsedMin = ((i * 5) / 60).round();
+          generateMessage.value =
+              'Running optsp — ${elapsedMin}m elapsed, still working…';
         }
 
         // Pull recent job logs and look for our job id.
