@@ -128,10 +128,18 @@ class OptionsApiService {
     String? recDate,
     List<String>? tickers,
     bool dryRun = false,
+    int port = 7497,
+    int clientId = 1,
+    double stopLossPct = 1.0,
+    double takeProfitPct = 0.5,
   }) async {
     try {
       final payload = <String, dynamic>{
         'dry_run': dryRun,
+        'port': port,
+        'client_id': clientId,
+        'stop_loss_pct': stopLossPct,
+        'take_profit_pct': takeProfitPct,
         if (recDate != null) 'rec_date': recDate,
         if (tickers != null) 'tickers': tickers,
       };
@@ -298,14 +306,11 @@ class OptionsApiService {
     }
   }
 
-  Future<Map<String, dynamic>> triggerPrefetch({
-    List<int>? years,
-    int workers = 4,
-  }) async {
+  Future<Map<String, dynamic>> triggerPrefetch({List<int>? years}) async {
     try {
       final res = await (await _client()).post(
         '/options/trigger/prefetch',
-        data: {if (years != null) 'years': years, 'workers': workers},
+        data: {if (years != null) 'years': years},
       );
       return res.data as Map<String, dynamic>;
     } on DioException catch (e) {
@@ -330,17 +335,11 @@ class OptionsApiService {
     }
   }
 
-  Future<Map<String, dynamic>> triggerRunOptsp({
-    String? runDate,
-    bool cacheOnly = true,
-  }) async {
+  Future<Map<String, dynamic>> triggerRunOptsp({String? runDate}) async {
     try {
       final res = await (await _client()).post(
         '/options/trigger/run-optsp',
-        data: {
-          if (runDate != null) 'run_date': runDate,
-          'cache_only': cacheOnly,
-        },
+        data: {if (runDate != null) 'run_date': runDate},
       );
       return res.data as Map<String, dynamic>;
     } on DioException catch (e) {

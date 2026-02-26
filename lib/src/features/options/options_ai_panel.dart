@@ -15,6 +15,7 @@ Future<void> showOptionsAiPanel(
   required List<OptionsRecommendation> recommendations,
   required String recDate,
   double? portfolioSize,
+  String? focusedTicker,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -25,6 +26,7 @@ Future<void> showOptionsAiPanel(
           recommendations: recommendations,
           recDate: recDate,
           portfolioSize: portfolioSize,
+          focusedTicker: focusedTicker,
         ),
   );
 }
@@ -37,12 +39,14 @@ class OptionsAiPanel extends StatefulWidget {
   final List<OptionsRecommendation> recommendations;
   final String recDate;
   final double? portfolioSize;
+  final String? focusedTicker;
 
   const OptionsAiPanel({
     super.key,
     required this.recommendations,
     required this.recDate,
     this.portfolioSize,
+    this.focusedTicker,
   });
 
   @override
@@ -58,6 +62,13 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
   final List<_ChatMsg> _messages = [];
   bool _isLoading = false;
   bool _initialised = false;
+  bool _showChips = false;
+
+  static const _suggestionChips = [
+    'Compare all trades by risk/reward',
+    'Which trades should I skip?',
+    'Show historical win rates',
+  ];
 
   @override
   void initState() {
@@ -93,36 +104,52 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
     _initialised = true;
 
     final count = widget.recommendations.length;
-    final prompt =
-        count > 0
-            ? 'Please analyse these $count iron condor recommendations for ${widget.recDate}. '
-                'Summarise which look strongest by score and POP, '
-                'reference their real historical win-rate and average P&L/share from the backtest data '
-                '(those numbers come from actual expiry prices, not estimates), '
-                'and give me a concise overall assessment including total capital at risk.'
-            : 'I have no iron condor recommendations for ${widget.recDate}. '
-                'Can you explain what iron condors are and when they tend to work best?';
+    final ticker = widget.focusedTicker;
+    final String prompt;
+
+    if (ticker != null) {
+      prompt =
+          'Analyze the iron condor trade for $ticker from ${widget.recDate}. '
+          'Focus on: strike selection, breakeven range, max risk/profit, POP, '
+          'and any historical backtest data available for $ticker. '
+          'Give a clear recommendation on whether this trade is worth taking.';
+    } else if (count > 0) {
+      prompt =
+          'Please analyse these $count iron condor recommendations for ${widget.recDate}. '
+          'Summarise which look strongest by score and POP, '
+          'reference their real historical win-rate and average P&L/share from the backtest data '
+          '(those numbers come from actual expiry prices, not estimates), '
+          'and give me a concise overall assessment including total capital at risk.';
+    } else {
+      prompt =
+          'I have no iron condor recommendations for ${widget.recDate}. '
+          'Can you explain what iron condors are and when they tend to work best?';
+    }
 
     setState(() {
       _isLoading = true;
       _messages.add(_ChatMsg(role: 'user', content: prompt));
     });
     await _callAI();
+    if (mounted && count > 0) {
+      setState(() => _showChips = true);
+    }
   }
 
   // ---------------------------------------------------------------------------
   // Send user follow-up
   // ---------------------------------------------------------------------------
 
-  Future<void> _send() async {
-    final text = _inputCtrl.text.trim();
+  Future<void> _send([String? prefilled]) async {
+    final text = prefilled ?? _inputCtrl.text.trim();
     if (text.isEmpty || _isLoading) return;
 
     setState(() {
       _messages.add(_ChatMsg(role: 'user', content: text));
       _isLoading = true;
+      _showChips = false;
     });
-    _inputCtrl.clear();
+    if (prefilled == null) _inputCtrl.clear();
     _scrollToBottom();
     await _callAI();
   }
@@ -179,7 +206,7 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
   Widget build(BuildContext context) {
     final screenH = MediaQuery.of(context).size.height;
     return Container(
-      height: screenH * 0.78,
+      height: screenH * 0.90,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -191,6 +218,7 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
           const Divider(height: 1),
           Expanded(child: _buildMessageList()),
           if (_isLoading) _buildTypingIndicator(),
+          if (_showChips && !_isLoading) _buildSuggestionChips(),
           const Divider(height: 1),
           _buildInput(),
         ],
@@ -248,7 +276,9 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
                   ),
                 ),
                 Text(
-                  '${widget.recDate} · ${widget.recommendations.length} iron condors · 499 tickers · real P&L from 2023',
+                  widget.focusedTicker != null
+                      ? '${widget.focusedTicker} · ${widget.recDate} · iron condor analysis'
+                      : '${widget.recDate} · ${widget.recommendations.length} iron condors · real P&L data',
                   style: TextStyle(
                     color: AppColors.grey500,
                     fontSize: UIConstants.fontM,
@@ -316,6 +346,44 @@ class _OptionsAiPanelState extends State<OptionsAiPanel> {
           const SizedBox(width: 8),
           const _TypingDots(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestionChips() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        UIConstants.paddingXXL,
+        UIConstants.paddingS,
+        UIConstants.paddingXXL,
+        0,
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children:
+              _suggestionChips.map((chip) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: UIConstants.spacingM),
+                  child: ActionChip(
+                    label: Text(
+                      chip,
+                      style: const TextStyle(
+                        fontSize: UIConstants.fontS,
+                        color: Color(0xFF4F78FF),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    backgroundColor: const Color(0xFFEEF2FF),
+                    side: const BorderSide(
+                      color: Color(0xFF4F78FF),
+                      width: 0.8,
+                    ),
+                    onPressed: () => _send(chip),
+                  ),
+                );
+              }).toList(),
+        ),
       ),
     );
   }
@@ -400,7 +468,7 @@ class _MessageBubble extends StatelessWidget {
 
     if (isUser) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: UIConstants.spacingL, left: 48),
+        padding: const EdgeInsets.only(bottom: UIConstants.spacingL, left: 64),
         child: Align(
           alignment: Alignment.centerRight,
           child: Container(
@@ -410,11 +478,20 @@ class _MessageBubble extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: const Color(0xFF4F78FF),
-              borderRadius: BorderRadius.circular(UIConstants.radiusM),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(4),
+              ),
             ),
             child: Text(
               msg.content,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
           ),
         ),
@@ -484,15 +561,27 @@ class _MessageBubble extends StatelessWidget {
                   vertical: UIConstants.paddingM,
                 ),
                 decoration: BoxDecoration(
-                  color: isError ? AppColors.errorLight : AppColors.grey100,
-                  borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                  color:
+                      isError ? AppColors.errorLight : const Color(0xFFF3F4F6),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(14),
+                    bottomLeft: Radius.circular(14),
+                    bottomRight: Radius.circular(14),
+                  ),
+                  border:
+                      isError
+                          ? Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3),
+                          )
+                          : null,
                 ),
                 child: Text(
                   msg.content,
                   style: TextStyle(
                     fontSize: 14,
                     color: isError ? AppColors.error : AppColors.textPrimary,
-                    height: 1.5,
+                    height: 1.6,
                   ),
                 ),
               ),

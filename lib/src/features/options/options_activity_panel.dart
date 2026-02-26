@@ -239,7 +239,7 @@ class _OptionsActivitySheetState extends State<_OptionsActivitySheet> {
 // ---------------------------------------------------------------------------
 
 const _scriptFileNames = {
-  'Generate Recommendations (optsp)': 'optsp.py',
+  'Generate Recommendations': 'opsp.py',
   'Prefetch Options Data': 'prefetch_options_datasp.py',
   'Fetch S&P 500 Symbols': 'fetch_sp500_symbols.py',
 };

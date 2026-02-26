@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/features/options/options_activity_panel.dart';
 import 'package:stock_app/src/features/options/options_ai_panel.dart';
+import 'package:stock_app/src/features/options/options_config_panel.dart';
 import 'package:stock_app/src/features/options/options_dashboard_controller.dart';
+import 'package:stock_app/src/features/options/options_ibkr_log_sheet.dart';
 import 'package:stock_app/src/models/options_recommendation.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
@@ -12,6 +14,9 @@ import 'package:stock_app/src/utils/services/options_api_service.dart';
 const Color _accent = Color(0xFF4F78FF);
 const Color _accentLight = Color(0xFFEEF2FF);
 const Color _cardBg = AppColors.white;
+const Color _liveRed = Color(0xFFDC2626);
+const Color _paperGreen = Color(0xFF059669);
+const Color _testAmber = Color(0xFFF59E0B);
 
 class OptionsDashboardScreen extends StatelessWidget {
   const OptionsDashboardScreen({super.key});
@@ -25,8 +30,8 @@ class OptionsDashboardScreen extends StatelessWidget {
       body: Column(
         children: [
           _Header(ctrl: ctrl),
-          _StatusBar(ctrl: ctrl),
-          _MorningBriefing(ctrl: ctrl),
+          _SystemHealthBar(ctrl: ctrl),
+          _ActionBar(ctrl: ctrl),
           Expanded(child: _Body(ctrl: ctrl)),
         ],
       ),
@@ -41,6 +46,35 @@ class OptionsDashboardScreen extends StatelessWidget {
 class _Header extends StatelessWidget {
   final OptionsDashboardController ctrl;
   const _Header({required this.ctrl});
+
+  Future<void> _pickDate(BuildContext context) async {
+    final now = DateTime.now();
+    final initial =
+        ctrl.currentDate.value.isNotEmpty
+            ? DateTime.tryParse(ctrl.currentDate.value) ?? now
+            : now;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      helpText: 'Select recommendations date',
+      builder:
+          (ctx, child) => Theme(
+            data: Theme.of(
+              ctx,
+            ).copyWith(colorScheme: const ColorScheme.light(primary: _accent)),
+            child: child!,
+          ),
+    );
+
+    if (picked != null) {
+      final dateStr =
+          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      ctrl.fetchRecommendations(date: dateStr);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,16 +115,47 @@ class _Header extends StatelessWidget {
                 ),
                 Obx(() {
                   final d = ctrl.currentDate.value;
-                  return Text(
-                    d.isNotEmpty ? 'Date: $d' : 'Loading...',
-                    style: const TextStyle(
-                      fontSize: UIConstants.fontL,
-                      color: AppColors.textSecondary,
+                  return Tooltip(
+                    message: 'Tap to load recommendations for a specific date',
+                    child: InkWell(
+                      onTap: () => _pickDate(context),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              d.isNotEmpty ? 'Date: $d' : 'Loading...',
+                              style: const TextStyle(
+                                fontSize: UIConstants.fontL,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.calendar_month_outlined,
+                              size: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 }),
               ],
             ),
+          ),
+          // Config settings icon
+          IconButton(
+            onPressed: () async {
+              await showOptionsConfigPanel(context);
+              ctrl.reloadConfig();
+            },
+            icon: const Icon(Icons.tune_rounded),
+            tooltip: 'Options Configuration',
+            color: AppColors.textSecondary,
           ),
           // System Activity log
           IconButton(
@@ -99,30 +164,6 @@ class _Header extends StatelessWidget {
             tooltip: 'System Activity Log',
             color: AppColors.textSecondary,
           ),
-          // Ask AI
-          Obx(() {
-            final hasRecs = ctrl.recommendations.isNotEmpty;
-            return OutlinedButton.icon(
-              onPressed:
-                  hasRecs
-                      ? () => showOptionsAiPanel(
-                        context,
-                        recommendations: ctrl.recommendations,
-                        recDate: ctrl.currentDate.value,
-                      )
-                      : null,
-              icon: const Icon(
-                Icons.psychology_outlined,
-                size: UIConstants.iconM,
-              ),
-              label: const Text('Ask AI'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _accent,
-                side: const BorderSide(color: _accent),
-              ),
-            );
-          }),
-          const SizedBox(width: UIConstants.spacingM),
           // Refresh
           Obx(() {
             final loading = ctrl.loadState.value == OptionsLoadState.loading;
@@ -146,163 +187,266 @@ class _Header extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Status bar
+// System Health Bar — compact strip: ThetaData · IBKR mode · data age · symbols
 // ---------------------------------------------------------------------------
 
-class _StatusBar extends StatelessWidget {
+class _SystemHealthBar extends StatelessWidget {
   final OptionsDashboardController ctrl;
-  const _StatusBar({required this.ctrl});
+  const _SystemHealthBar({required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final ms = ctrl.morningStatus.value;
       final s = ctrl.status.value;
-      if (s == null) return const SizedBox.shrink();
+      final cfg = ctrl.config.value;
+
+      final prefetch = ms?['last_prefetch'] as Map<String, dynamic>?;
+      final prefetchOk = prefetch?['ok'] == true;
+      final prefetchAge = _formatRelative(
+        prefetch?['ended_at'] ?? prefetch?['ran_at'],
+      );
+      final prefetchDate = _formatDate(
+        prefetch?['ended_at'] ?? prefetch?['ran_at'],
+      );
+      final isSyncing = ctrl.prefetchState.value == OptionsLoadState.loading;
+
+      final isDryRun = cfg.dryRun;
+      final isLive = !cfg.isPaper;
+      final modeColor =
+          isDryRun
+              ? _testAmber
+              : isLive
+              ? _liveRed
+              : _paperGreen;
+      final modeLabel =
+          isDryRun
+              ? 'TEST'
+              : isLive
+              ? 'LIVE'
+              : 'PAPER';
+      final modeIcon =
+          isDryRun
+              ? Icons.science_outlined
+              : isLive
+              ? Icons.bolt_rounded
+              : Icons.verified_outlined;
 
       return Container(
-        color: AppColors.white,
-        padding: const EdgeInsets.fromLTRB(
-          UIConstants.paddingXXL,
-          0,
-          UIConstants.paddingXXL,
-          UIConstants.paddingL,
+        color: const Color(0xFF111827),
+        padding: const EdgeInsets.symmetric(
+          horizontal: UIConstants.paddingXXL,
+          vertical: 8,
         ),
-        child: Wrap(
-          spacing: UIConstants.spacingM,
-          runSpacing: UIConstants.spacingS,
+        child: Row(
           children: [
-            _Chip(
-              icon: Icons.list_alt_rounded,
-              label: '${s.symbolCount} symbols',
-              color: _accent,
+            // ThetaData status dot
+            GestureDetector(
+              onTap: () => showOptionsActivityPanel(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: prefetchOk ? _paperGreen : AppColors.error,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'ThetaData',
+                    style: TextStyle(
+                      fontSize: UIConstants.fontS,
+                      color: prefetchOk ? _paperGreen : AppColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            if (s.latestRecommendationDate != null)
-              _Chip(
-                icon: Icons.calendar_today_outlined,
-                label: 'Latest: ${s.latestRecommendationDate}',
-                color: AppColors.success,
+            const SizedBox(width: UIConstants.spacingXL),
+            // Data coverage + sync button
+            if (prefetch != null) ...[
+              Tooltip(
+                message:
+                    prefetchDate.isNotEmpty
+                        ? 'Options data synced on $prefetchDate ($prefetchAge)'
+                        : 'Synced $prefetchAge',
+                child: Text(
+                  'Synced: $prefetchDate',
+                  style: const TextStyle(
+                    fontSize: UIConstants.fontS,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
               ),
-            if (s.nextFetchSymbols != null)
-              _Chip(
-                icon: Icons.schedule_rounded,
-                label: 'Next update: ${_formatNextRun(s.nextFetchSymbols!)}',
-                color: AppColors.warning,
+              const SizedBox(width: 4),
+              Tooltip(
+                message:
+                    'Sync options data to today\n(downloads latest chains from ThetaData Terminal)',
+                child: GestureDetector(
+                  onTap: isSyncing ? null : ctrl.triggerPrefetch,
+                  child:
+                      isSyncing
+                          ? const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                          )
+                          : const Icon(
+                            Icons.sync_rounded,
+                            size: 14,
+                            color: Color(0xFF6B7280),
+                          ),
+                ),
               ),
+            ],
+            if (s != null) ...[
+              const SizedBox(width: UIConstants.spacingXL),
+              Text(
+                '${s.symbolCount} symbols',
+                style: const TextStyle(
+                  fontSize: UIConstants.fontS,
+                  color: Color(0xFF9CA3AF),
+                ),
+              ),
+            ],
+            const Spacer(),
+            // IBKR mode badge — tappable to open config
+            GestureDetector(
+              onTap: () async {
+                await showOptionsConfigPanel(context);
+                ctrl.reloadConfig();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: modeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(
+                    UIConstants.radiusCircular,
+                  ),
+                  border: Border.all(color: modeColor.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(modeIcon, size: 12, color: modeColor),
+                    const SizedBox(width: 5),
+                    Text(
+                      modeLabel,
+                      style: TextStyle(
+                        fontSize: UIConstants.fontXS,
+                        fontWeight: FontWeight.bold,
+                        color: modeColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 11,
+                      color: modeColor.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       );
     });
   }
 
-  String _formatNextRun(String iso) {
+  String _formatRelative(dynamic iso) {
+    if (iso == null) return '?';
     try {
-      final dt = DateTime.parse(iso).toLocal();
-      final now = DateTime.now();
-      final diff = dt.difference(now);
-      if (diff.inDays > 0) return 'in ${diff.inDays}d ${diff.inHours % 24}h';
-      if (diff.inHours > 0) {
-        return 'in ${diff.inHours}h ${diff.inMinutes % 60}m';
-      }
-      return 'in ${diff.inMinutes}m';
+      final dt = DateTime.parse(iso.toString()).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inDays >= 1) return '${diff.inDays}d ago';
+      if (diff.inHours >= 1) return '${diff.inHours}h ago';
+      if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
+      return 'just now';
     } catch (_) {
-      return iso;
+      return iso.toString();
+    }
+  }
+
+  /// Returns a short human-readable date like "Feb 25" or "Feb 25, 2024".
+  String _formatDate(dynamic iso) {
+    if (iso == null) return '';
+    try {
+      final dt = DateTime.parse(iso.toString()).toLocal();
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final now = DateTime.now();
+      final sameYear = dt.year == now.year;
+      final month = months[dt.month - 1];
+      return sameYear ? '$month ${dt.day}' : '$month ${dt.day}, ${dt.year}';
+    } catch (_) {
+      return '';
     }
   }
 }
 
-class _Chip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _Chip({required this.icon, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: UIConstants.paddingM,
-        vertical: UIConstants.paddingXS,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(UIConstants.radiusCircular),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: UIConstants.iconXS, color: color),
-          const SizedBox(width: UIConstants.spacingS),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: UIConstants.fontS,
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ---------------------------------------------------------------------------
-// Morning briefing + Generate button
+// Action Bar — Generate + Prefetch buttons with live status messages
 // ---------------------------------------------------------------------------
 
-class _MorningBriefing extends StatelessWidget {
+class _ActionBar extends StatelessWidget {
   final OptionsDashboardController ctrl;
-  const _MorningBriefing({required this.ctrl});
+  const _ActionBar({required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final ms = ctrl.morningStatus.value;
-      final genState = ctrl.generateState.value;
-      final isGenerating = genState == OptionsLoadState.loading;
+      final isGenerating = ctrl.generateState.value == OptionsLoadState.loading;
 
-      final prefetch = ms?['last_prefetch'] as Map<String, dynamic>?;
       final sp500 = ms?['last_sp500_update'] as Map<String, dynamic>?;
-      final lastOptsp = ms?['last_optsp'] as Map<String, dynamic>?;
       final running =
           (ms?['running_jobs'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      final hasRunning = running.isNotEmpty;
 
       return Container(
         color: AppColors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Status pills row ────────────────────────────────────────────
-            if (ms != null)
+            // ── Status chips row ─────────────────────────────────────────────
+            if (sp500 != null ||
+                running.isNotEmpty ||
+                ctrl.fetchSymbolsMessage.value.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   UIConstants.paddingXXL,
                   UIConstants.paddingM,
                   UIConstants.paddingXXL,
-                  UIConstants.paddingS,
+                  0,
                 ),
                 child: Wrap(
                   spacing: UIConstants.spacingM,
                   runSpacing: UIConstants.spacingS,
                   children: [
-                    // Prefetch pill
-                    if (prefetch != null && prefetch.isNotEmpty)
-                      _StatusPill(
-                        icon:
-                            prefetch['ok'] == true
-                                ? Icons.check_circle_outline
-                                : Icons.error_outline,
-                        label: _prefetchLabel(prefetch),
-                        color:
-                            prefetch['ok'] == true
-                                ? const Color(0xFF059669)
-                                : AppColors.error,
-                        tooltip: 'Last prefetch: ${prefetch['summary'] ?? ''}',
-                      ),
-                    // SP500 pill — tappable
+                    // SP500 pill — tappable to see diff
                     if (sp500 != null && sp500.isNotEmpty)
                       _Tappable(
                         onTap: () => _showSp500Dialog(context, sp500),
@@ -322,8 +466,26 @@ class _MorningBriefing extends StatelessWidget {
                           ),
                         ),
                       ),
+                    // Fetch-symbols status message
+                    if (ctrl.fetchSymbolsMessage.value.isNotEmpty)
+                      _StatusPill(
+                        icon:
+                            ctrl.fetchSymbolsState.value ==
+                                    OptionsLoadState.loading
+                                ? Icons.sync_rounded
+                                : Icons.check_circle_outline,
+                        label: ctrl.fetchSymbolsMessage.value,
+                        color:
+                            ctrl.fetchSymbolsState.value ==
+                                    OptionsLoadState.error
+                                ? AppColors.error
+                                : _accent,
+                        spinning:
+                            ctrl.fetchSymbolsState.value ==
+                            OptionsLoadState.loading,
+                      ),
                     // Running indicator — tappable to open activity panel
-                    if (hasRunning)
+                    if (running.isNotEmpty)
                       _Tappable(
                         onTap: () => showOptionsActivityPanel(context),
                         child: _StatusPill(
@@ -337,18 +499,19 @@ class _MorningBriefing extends StatelessWidget {
                   ],
                 ),
               ),
-            const Divider(height: 1),
-            // ── Generate button ─────────────────────────────────────────────
+            // ── Buttons row ─────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 UIConstants.paddingXXL,
-                UIConstants.paddingL,
+                UIConstants.paddingM,
                 UIConstants.paddingXXL,
-                UIConstants.paddingL,
+                UIConstants.paddingM,
               ),
               child: Row(
                 children: [
+                  // Generate button (2:1 width ratio)
                   Expanded(
+                    flex: 2,
                     child: FilledButton.icon(
                       onPressed:
                           isGenerating ? null : ctrl.generateRecommendations,
@@ -362,15 +525,12 @@ class _MorningBriefing extends StatelessWidget {
                                   color: AppColors.white,
                                 ),
                               )
-                              : const Icon(Icons.bolt_rounded, size: 20),
+                              : const Icon(Icons.bolt_rounded, size: 18),
                       label: Text(
                         isGenerating
-                            ? 'Generating recommendations…'
-                            : 'Generate Today\'s Recommendations',
-                        style: const TextStyle(
-                          fontSize: UIConstants.fontL,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            ? 'Generating…'
+                            : 'Generate Recommendations',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       style: FilledButton.styleFrom(
                         backgroundColor:
@@ -379,7 +539,7 @@ class _MorningBriefing extends StatelessWidget {
                                 : const Color(0xFF7C3AED),
                         foregroundColor: AppColors.white,
                         padding: const EdgeInsets.symmetric(
-                          vertical: UIConstants.paddingL,
+                          vertical: UIConstants.paddingM,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
@@ -389,49 +549,70 @@ class _MorningBriefing extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Stop button — visible only while generating
                   if (isGenerating) ...[
-                    const SizedBox(width: UIConstants.spacingM),
+                    const SizedBox(width: UIConstants.spacingS),
                     Tooltip(
-                      message: 'Stop optsp',
+                      message: 'Cancel',
                       child: FilledButton(
                         onPressed: ctrl.cancelGenerating,
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.error,
                           foregroundColor: AppColors.white,
-                          padding: const EdgeInsets.all(UIConstants.paddingL),
-                          minimumSize: const Size(48, 48),
+                          padding: const EdgeInsets.all(UIConstants.paddingM),
+                          minimumSize: const Size(42, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                               UIConstants.radiusM,
                             ),
                           ),
                         ),
-                        child: const Icon(Icons.stop_rounded, size: 22),
-                      ),
-                    ),
-                  ] else if (lastOptsp != null && lastOptsp.isNotEmpty) ...[
-                    // Last run indicator when idle
-                    const SizedBox(width: UIConstants.spacingM),
-                    Tooltip(
-                      message:
-                          'Last run: ${_formatRelative(lastOptsp['ran_at'])}',
-                      child: Icon(
-                        lastOptsp['ok'] == true
-                            ? Icons.check_circle_rounded
-                            : Icons.warning_rounded,
-                        color:
-                            lastOptsp['ok'] == true
-                                ? const Color(0xFF059669)
-                                : AppColors.warning,
-                        size: 22,
+                        child: const Icon(Icons.stop_rounded, size: 18),
                       ),
                     ),
                   ],
+                  const SizedBox(width: UIConstants.spacingS),
+                  // Update SP500 list button
+                  Obx(() {
+                    final isFetching =
+                        ctrl.fetchSymbolsState.value ==
+                        OptionsLoadState.loading;
+                    return Tooltip(
+                      message:
+                          'Refresh the S&P 500 symbol list from the server.\nRun this periodically to pick up index additions/removals.',
+                      child: OutlinedButton(
+                        onPressed: isFetching ? null : ctrl.triggerFetchSymbols,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF6B7280),
+                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                          padding: const EdgeInsets.all(UIConstants.paddingM),
+                          minimumSize: const Size(42, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              UIConstants.radiusM,
+                            ),
+                          ),
+                        ),
+                        child:
+                            isFetching
+                                ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                )
+                                : const Icon(
+                                  Icons.format_list_bulleted_add,
+                                  size: 18,
+                                ),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
-            // Generate status/progress message
+            // ── Status messages ──────────────────────────────────────────────
             Obx(() {
               final msg = ctrl.generateMessage.value;
               if (msg.isEmpty) return const SizedBox.shrink();
@@ -459,20 +640,12 @@ class _MorningBriefing extends StatelessWidget {
     });
   }
 
-  String _prefetchLabel(Map<String, dynamic> p) {
-    final at = _formatRelative(p['ended_at'] ?? p['ran_at']);
-    if (p['ok'] == true) return 'Prefetch OK · $at';
-    return 'Prefetch failed · $at';
-  }
-
   String _sp500Label(Map<String, dynamic> s) {
     final at = _formatRelative(s['ran_at']);
     final added = (s['added'] as List?)?.length ?? 0;
     final removed = (s['removed'] as List?)?.length ?? 0;
     final count = s['current_count'];
-    if (added == 0 && removed == 0) {
-      return 'SP500 · $count symbols · $at';
-    }
+    if (added == 0 && removed == 0) return 'SP500 · $count symbols · $at';
     final parts = <String>[];
     if (added > 0) parts.add('+$added');
     if (removed > 0) parts.add('-$removed');
@@ -1033,6 +1206,7 @@ class _RecommendationsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _RiskSummaryBar(ctrl: ctrl),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(UIConstants.paddingXXL),
@@ -1045,6 +1219,14 @@ class _RecommendationsList extends StatelessWidget {
                   rec: rec,
                   rank: i + 1,
                   onExecute: () => _confirmAndExecute(context, ctrl, rec),
+                  onAnalyze:
+                      () => showOptionsAiPanel(
+                        context,
+                        recommendations: ctrl.recommendations,
+                        recDate: ctrl.currentDate.value,
+                        focusedTicker: rec.ticker,
+                        portfolioSize: ctrl.config.value.portfolioSize,
+                      ),
                 ),
               );
             },
@@ -1060,47 +1242,190 @@ class _RecommendationsList extends StatelessWidget {
     OptionsDashboardController ctrl,
     OptionsRecommendation rec,
   ) {
+    final cfg = ctrl.config.value;
+    final isDryRun = cfg.dryRun;
+    final isLive = !cfg.isPaper;
+    final modeColor =
+        isDryRun
+            ? _testAmber
+            : isLive
+            ? _liveRed
+            : _paperGreen;
+    final modeLabel =
+        isDryRun
+            ? 'TEST MODE'
+            : isLive
+            ? 'LIVE'
+            : 'PAPER';
+
     showDialog(
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Send to IBKR'),
-            content: Text(
-              'Execute iron condor for ${rec.ticker}?\n\n'
-              'Net credit: \$${rec.netCredit?.toStringAsFixed(2) ?? "?"} per share\n'
-              'Contracts: ${rec.contracts ?? "?"}\n'
-              'Max risk: \$${rec.maxRiskUsd?.toStringAsFixed(0) ?? "?"}',
+            title: Text('Send ${rec.ticker} to IBKR'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mode badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.paddingM,
+                    vertical: UIConstants.paddingS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: modeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(UIConstants.radiusS),
+                    border: Border.all(color: modeColor.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    modeLabel,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: modeColor,
+                      fontSize: UIConstants.fontM,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: UIConstants.spacingXL),
+                Text(
+                  'Net credit: \$${rec.netCredit?.toStringAsFixed(2) ?? "?"}/share\n'
+                  'Contracts: ${rec.contracts ?? "?"}  ·  '
+                  'Max risk: \$${rec.maxRiskUsd?.toStringAsFixed(0) ?? "?"}',
+                ),
+              ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Cancel'),
               ),
-              FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: _accent),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: modeColor),
+                icon: Icon(
+                  isDryRun ? Icons.science_outlined : Icons.send_rounded,
+                  size: UIConstants.iconM,
+                ),
                 onPressed: () async {
                   Navigator.pop(ctx);
-                  final ok = await ctrl.executeSingle(rec);
+                  final result = await ctrl.executeSingle(rec);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          ok
-                              ? '${rec.ticker} order submitted to IBKR'
-                              : 'Failed: ${ctrl.executeMessage.value}',
-                        ),
-                        backgroundColor:
-                            ok ? AppColors.success : AppColors.error,
-                      ),
-                    );
+                    showIbkrLogSheet(context, result);
                   }
                 },
-                child: const Text('Execute'),
+                label: Text(isDryRun ? 'Test Run' : 'Execute'),
               ),
             ],
           ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Risk Summary Bar — aggregate stats strip for loaded recommendations
+// ---------------------------------------------------------------------------
+
+class _RiskSummaryBar extends StatelessWidget {
+  final OptionsDashboardController ctrl;
+  const _RiskSummaryBar({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final recs = ctrl.recommendations;
+      if (recs.isEmpty) return const SizedBox.shrink();
+      final count = recs.length;
+      final totalRisk = ctrl.totalMaxRisk;
+      final totalCredit = ctrl.totalPotentialCredit;
+      final portfolioSize = ctrl.config.value.portfolioSize;
+      final portfolioPct =
+          portfolioSize > 0 ? (totalRisk / portfolioSize * 100) : 0.0;
+
+      return Container(
+        color: const Color(0xFF1F2937),
+        padding: const EdgeInsets.symmetric(
+          horizontal: UIConstants.paddingXXL,
+          vertical: 8,
+        ),
+        child: Row(
+          children: [
+            _RiskStat(label: 'Trades', value: '$count'),
+            _RiskDivider(),
+            _RiskStat(
+              label: 'Max Risk',
+              value: '\$${_fmt(totalRisk)}',
+              valueColor: const Color(0xFFFCA5A5),
+            ),
+            _RiskDivider(),
+            _RiskStat(
+              label: 'Potential Credit',
+              value: '\$${_fmt(totalCredit)}',
+              valueColor: const Color(0xFF86EFAC),
+            ),
+            _RiskDivider(),
+            _RiskStat(
+              label: 'of Portfolio',
+              value: '${portfolioPct.toStringAsFixed(1)}%',
+              valueColor:
+                  portfolioPct > 20
+                      ? const Color(0xFFFCA5A5)
+                      : const Color(0xFFD1D5DB),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  String _fmt(double v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
+    return v.toStringAsFixed(0);
+  }
+}
+
+class _RiskStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _RiskStat({required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF9CA3AF),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: UIConstants.fontM,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? const Color(0xFFF9FAFB),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RiskDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 1,
+    height: 28,
+    margin: const EdgeInsets.symmetric(horizontal: UIConstants.spacingL),
+    color: const Color(0xFF374151),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1129,44 +1454,129 @@ class _ExecuteAllBar extends StatelessWidget {
         children: [
           Obx(() {
             final loading = ctrl.executeState.value == OptionsLoadState.loading;
-            return FilledButton.icon(
-              onPressed:
-                  loading ? null : () => _confirmExecuteAll(context, ctrl),
-              icon:
-                  loading
-                      ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : const Icon(Icons.send_rounded, size: UIConstants.iconM),
-              label: const Text('Execute All'),
-              style: FilledButton.styleFrom(
-                backgroundColor: _accent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: UIConstants.paddingXXL,
-                  vertical: UIConstants.paddingM,
+            final cfg = ctrl.config.value;
+            final isDryRun = cfg.dryRun;
+            final isLive = !cfg.isPaper;
+            final modeColor =
+                isDryRun
+                    ? _testAmber
+                    : isLive
+                    ? _liveRed
+                    : _paperGreen;
+            final modeLabel =
+                isDryRun
+                    ? 'TEST'
+                    : isLive
+                    ? 'LIVE'
+                    : 'PAPER';
+            final btnLabel =
+                isDryRun
+                    ? 'Test Run All'
+                    : isLive
+                    ? 'Execute All (Live)'
+                    : 'Execute All (Paper)';
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Inline IBKR mode badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: modeColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(
+                      UIConstants.radiusCircular,
+                    ),
+                    border: Border.all(color: modeColor.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    modeLabel,
+                    style: TextStyle(
+                      fontSize: UIConstants.fontXS,
+                      fontWeight: FontWeight.bold,
+                      color: modeColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: UIConstants.spacingM),
+                FilledButton.icon(
+                  onPressed:
+                      loading ? null : () => _confirmExecuteAll(context, ctrl),
+                  icon:
+                      loading
+                          ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : Icon(
+                            isDryRun
+                                ? Icons.science_outlined
+                                : Icons.send_rounded,
+                            size: UIConstants.iconM,
+                          ),
+                  label: Text(btnLabel),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: modeColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: UIConstants.paddingXL,
+                      vertical: UIConstants.paddingM,
+                    ),
+                  ),
+                ),
+              ],
             );
           }),
-          const SizedBox(width: UIConstants.spacingXL),
+          const SizedBox(width: UIConstants.spacingL),
           Obx(() {
             final msg = ctrl.executeMessage.value;
-            if (msg.isEmpty) return const SizedBox.shrink();
+            final hasResult = ctrl.lastExecuteResult.value != null;
+            if (msg.isEmpty && !hasResult) return const SizedBox.shrink();
             final ok = ctrl.executeState.value == OptionsLoadState.success;
             return Expanded(
-              child: Text(
-                msg,
-                style: TextStyle(
-                  color: ok ? AppColors.success : AppColors.error,
-                  fontSize: UIConstants.fontL,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      msg,
+                      style: TextStyle(
+                        color: ok ? AppColors.success : AppColors.error,
+                        fontSize: UIConstants.fontM,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasResult) ...[
+                    const SizedBox(width: UIConstants.spacingM),
+                    TextButton.icon(
+                      onPressed: () {
+                        final result = ctrl.lastExecuteResult.value;
+                        if (result != null && context.mounted) {
+                          showIbkrLogSheet(context, result);
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.terminal_rounded,
+                        size: UIConstants.iconXS,
+                      ),
+                      label: const Text('View Log'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _accent,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.paddingM,
+                          vertical: UIConstants.paddingXS,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             );
           }),
@@ -1180,44 +1590,152 @@ class _ExecuteAllBar extends StatelessWidget {
     OptionsDashboardController ctrl,
   ) {
     final count = ctrl.recommendations.length;
+    final cfg = ctrl.config.value;
+    final isDryRun = cfg.dryRun;
+    final isLive = !cfg.isPaper;
+
+    final modeColor =
+        isDryRun
+            ? _testAmber
+            : isLive
+            ? _liveRed
+            : _paperGreen;
+    final modeLabel =
+        isDryRun
+            ? 'TEST MODE'
+            : isLive
+            ? 'LIVE — Port ${cfg.ibkrPort}'
+            : 'PAPER — Port ${cfg.ibkrPort}';
+    final modeIcon =
+        isDryRun
+            ? Icons.science_outlined
+            : isLive
+            ? Icons.bolt_rounded
+            : Icons.verified_outlined;
+
+    final totalRisk = ctrl.totalMaxRisk;
+    final totalCredit = ctrl.totalPotentialCredit;
+    final portfolioPct =
+        cfg.portfolioSize > 0 ? (totalRisk / cfg.portfolioSize * 100) : 0.0;
+
     showDialog(
       context: context,
       builder:
           (ctx) => AlertDialog(
             title: const Text('Execute All to IBKR'),
-            content: Text(
-              'Send all $count iron condor recommendations to IBKR?\n\n'
-              'Make sure IBKR TWS/Gateway is running on port 7497 (paper) or 7496 (live).',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mode badge
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.paddingM,
+                    vertical: UIConstants.paddingS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: modeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(UIConstants.radiusS),
+                    border: Border.all(color: modeColor.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(modeIcon, color: modeColor, size: UIConstants.iconM),
+                      const SizedBox(width: UIConstants.spacingM),
+                      Text(
+                        modeLabel,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: modeColor,
+                          fontSize: UIConstants.fontL,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: UIConstants.spacingXL),
+                // Risk summary
+                Table(
+                  children: [
+                    _tableRow('Trades', '$count iron condors'),
+                    _tableRow('Max Risk', '\$${totalRisk.toStringAsFixed(0)}'),
+                    _tableRow(
+                      'Potential Credit',
+                      '\$${totalCredit.toStringAsFixed(0)}',
+                    ),
+                    _tableRow(
+                      'Portfolio Risk',
+                      '${portfolioPct.toStringAsFixed(1)}%',
+                    ),
+                    if (!isDryRun) ...[
+                      _tableRow(
+                        'Stop-Loss',
+                        '${(cfg.stopLossPct * 100).round()}% of max loss',
+                      ),
+                      _tableRow(
+                        'Take-Profit',
+                        '${(cfg.takeProfitPct * 100).round()}% of credit',
+                      ),
+                    ],
+                  ],
+                ),
+                if (isDryRun) ...[
+                  const SizedBox(height: UIConstants.spacingL),
+                  const Text(
+                    'Test Mode: no real orders will be submitted to IBKR.',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Cancel'),
               ),
-              FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: _accent),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: modeColor),
+                icon: Icon(
+                  isDryRun ? Icons.science_outlined : Icons.send_rounded,
+                  size: UIConstants.iconM,
+                ),
                 onPressed: () async {
                   Navigator.pop(ctx);
-                  final ok = await ctrl.executeAll();
+                  final result = await ctrl.executeAll();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          ok
-                              ? 'All orders submitted to IBKR'
-                              : 'Execution failed: ${ctrl.executeMessage.value}',
-                        ),
-                        backgroundColor:
-                            ok ? AppColors.success : AppColors.error,
-                        duration: const Duration(seconds: 4),
-                      ),
-                    );
+                    showIbkrLogSheet(context, result);
                   }
                 },
-                child: const Text('Execute All'),
+                label: Text(isDryRun ? 'Test Run' : 'Execute All'),
               ),
             ],
           ),
+    );
+  }
+
+  TableRow _tableRow(String label, String value) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1231,6 +1749,7 @@ class IronCondorCard extends StatelessWidget {
   final int rank;
   final VoidCallback? onExecute;
   final VoidCallback? onDelete;
+  final VoidCallback? onAnalyze;
   final bool readOnly;
 
   const IronCondorCard({
@@ -1239,6 +1758,7 @@ class IronCondorCard extends StatelessWidget {
     required this.rank,
     this.onExecute,
     this.onDelete,
+    this.onAnalyze,
     this.readOnly = false,
   });
 
@@ -1379,16 +1899,47 @@ class IronCondorCard extends StatelessWidget {
                     value: '\$${rec.maxProfitUsd!.toStringAsFixed(0)}',
                     valueColor: AppColors.success,
                   ),
+                // Breakeven range
+                if (rec.shortPut != null && rec.netCredit != null)
+                  _Stat(
+                    label: 'BE Lower',
+                    value:
+                        '\$${(rec.shortPut! - rec.netCredit!).toStringAsFixed(2)}',
+                    valueColor: AppColors.textSecondary,
+                  ),
+                if (rec.shortCall != null && rec.netCredit != null)
+                  _Stat(
+                    label: 'BE Upper',
+                    value:
+                        '\$${(rec.shortCall! + rec.netCredit!).toStringAsFixed(2)}',
+                    valueColor: AppColors.textSecondary,
+                  ),
               ],
             ),
 
             // ── Row 5: action buttons ─────────────────────────────────────
-            if (!readOnly && onExecute != null || onDelete != null) ...[
+            if (!readOnly) ...[
               const SizedBox(height: UIConstants.spacingXL),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  if (!readOnly && onExecute != null)
+                  // Ask AI button — opens AI panel focused on this ticker
+                  if (onAnalyze != null)
+                    OutlinedButton.icon(
+                      onPressed: onAnalyze,
+                      icon: const Icon(
+                        Icons.auto_awesome_outlined,
+                        size: UIConstants.iconM,
+                      ),
+                      label: const Text('Ask AI'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF7C3AED),
+                        side: const BorderSide(color: Color(0xFF7C3AED)),
+                      ),
+                    ),
+                  if (onExecute != null) ...[
+                    if (onAnalyze != null)
+                      const SizedBox(width: UIConstants.spacingM),
                     OutlinedButton.icon(
                       onPressed: onExecute,
                       icon: const Icon(
@@ -1401,6 +1952,7 @@ class IronCondorCard extends StatelessWidget {
                         side: const BorderSide(color: _accent),
                       ),
                     ),
+                  ],
                   if (onDelete != null) ...[
                     const SizedBox(width: UIConstants.spacingM),
                     OutlinedButton.icon(
