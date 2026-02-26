@@ -5,6 +5,7 @@ import 'package:stock_app/src/utils/formatters/number_format.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
 import 'package:stock_app/src/utils/app_strings/dart/app_strings.dart';
+import 'package:stock_app/src/utils/controllers/ui_mode_controller.dart';
 import 'package:stock_app/src/utils/widget/common/common_widgets.dart';
 import 'package:stock_app/src/utils/widget/app_text_field.dart';
 
@@ -85,6 +86,8 @@ class SettingsScreen extends StatelessWidget {
           children: [
             _buildHeader(),
             const SizedBox(height: UIConstants.spacingXXXL),
+            _buildUiStyleCard(context),
+            const SizedBox(height: UIConstants.spacingL),
             _buildSettingsCard(),
             const SizedBox(height: UIConstants.spacingL),
             _buildEditButton(context),
@@ -184,6 +187,96 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildUiStyleCard(BuildContext context) {
+    final uiModeCtrl = Get.find<UiModeController>();
+    return Container(
+      width: double.infinity,
+      padding: AppPadding.allXL,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(UIConstants.radiusL),
+        border: Border.all(color: AppColors.grey300),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.grey.withValues(alpha: 0.1),
+            blurRadius: UIConstants.elevationXL,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.view_quilt_rounded,
+                color: AppColors.blue,
+                size: 22,
+              ),
+              const SizedBox(width: UIConstants.spacingM),
+              const Text(
+                'UI Style',
+                style: TextStyle(
+                  fontSize: UIConstants.fontXL,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: UIConstants.spacingS),
+          Text(
+            'Choose how navigation and screen layout are organized.',
+            style: TextStyle(
+              fontSize: UIConstants.fontL,
+              color: AppColors.grey600,
+            ),
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Obx(() {
+            final selected = controller.uiMode.value;
+            return SegmentedButton<String>(
+              segments: const [
+                ButtonSegment<String>(
+                  value: 'simplified',
+                  label: Text('Simplified (recommended)'),
+                  icon: Icon(Icons.auto_fix_high_rounded),
+                ),
+                ButtonSegment<String>(
+                  value: 'classic',
+                  label: Text('Classic'),
+                  icon: Icon(Icons.restore_rounded),
+                ),
+              ],
+              selected: <String>{selected},
+              onSelectionChanged:
+                  controller.uiModeSaving.value
+                      ? null
+                      : (selection) async {
+                        final nextMode = selection.first;
+                        await controller.setUiMode(context, nextMode);
+                        await uiModeCtrl.setMode(
+                          nextMode == 'classic'
+                              ? UiMode.classic
+                              : UiMode.simplified,
+                        );
+                      },
+            );
+          }),
+          const SizedBox(height: UIConstants.spacingM),
+          Text(
+            "Don't like this layout? Switch back to Classic instantly.",
+            style: TextStyle(
+              fontSize: UIConstants.fontM,
+              color: AppColors.grey600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEngineSettingsCard(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -276,6 +369,8 @@ class SettingsScreen extends StatelessWidget {
             label: AppStrings.dailyLossLimitPct,
             controller: controller.dailyLossLimitCtrl,
             isDecimal: true,
+            helperText: 'Fraction format, e.g. 0.02 for 2%',
+            isCompact: true,
           ),
           const SizedBox(height: UIConstants.spacingL),
           Obx(
@@ -368,6 +463,8 @@ class SettingsScreen extends StatelessWidget {
           AppTextField(
             label: 'Server URL (e.g. http://localhost:8001/)',
             controller: controller.optionsServerUrlCtrl,
+            helperText: 'Must include http:// or https://',
+            isCompact: true,
           ),
           const SizedBox(height: 6),
           Text(

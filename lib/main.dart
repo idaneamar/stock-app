@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/controllers/trading_mode_controller.dart';
+import 'package:stock_app/src/utils/controllers/ui_mode_controller.dart';
 import 'package:stock_app/src/utils/route/app_router.dart';
 
 void main() {
   Get.put(TradingModeController(), permanent: true);
+  Get.put(UiModeController(), permanent: true);
   runApp(const StockApp());
 }
 

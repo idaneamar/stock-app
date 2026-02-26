@@ -5,6 +5,7 @@ import 'package:stock_app/src/features/options/options_ai_panel.dart';
 import 'package:stock_app/src/features/options/options_config_panel.dart';
 import 'package:stock_app/src/features/options/options_dashboard_controller.dart';
 import 'package:stock_app/src/features/options/options_ibkr_log_sheet.dart';
+import 'package:stock_app/src/features/options/widgets/options_dashboard_layout.dart';
 import 'package:stock_app/src/models/options_recommendation.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
@@ -27,13 +28,11 @@ class OptionsDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.grey50,
-      body: Column(
-        children: [
-          _Header(ctrl: ctrl),
-          _SystemHealthBar(ctrl: ctrl),
-          _ActionBar(ctrl: ctrl),
-          Expanded(child: _Body(ctrl: ctrl)),
-        ],
+      body: OptionsDashboardLayout(
+        header: _Header(ctrl: ctrl),
+        healthBar: _SystemHealthBar(ctrl: ctrl),
+        actionBar: _ActionBar(ctrl: ctrl),
+        body: _Body(ctrl: ctrl),
       ),
     );
   }
@@ -570,6 +569,49 @@ class _ActionBar extends StatelessWidget {
                       ),
                     ),
                   ],
+                  const SizedBox(width: UIConstants.spacingM),
+                  // Sync Data button
+                  Obx(() {
+                    final isSyncing =
+                        ctrl.prefetchState.value == OptionsLoadState.loading;
+                    return Tooltip(
+                      message:
+                          'Download the latest options chain data from ThetaData Terminal.\nRun this to keep recommendations up to date.',
+                      child: OutlinedButton.icon(
+                        onPressed: isSyncing ? null : ctrl.triggerPrefetch,
+                        icon:
+                            isSyncing
+                                ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Icon(
+                                  Icons.cloud_sync_rounded,
+                                  size: 16,
+                                ),
+                        label: Text(
+                          isSyncing ? 'Syncing…' : 'Sync Data',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _accent,
+                          side: const BorderSide(color: _accent),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: UIConstants.paddingM,
+                            horizontal: UIConstants.paddingM,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              UIConstants.radiusM,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                   const SizedBox(width: UIConstants.spacingS),
                   // Update SP500 list button
                   Obx(() {
@@ -614,9 +656,13 @@ class _ActionBar extends StatelessWidget {
             ),
             // ── Status messages ──────────────────────────────────────────────
             Obx(() {
-              final msg = ctrl.generateMessage.value;
+              final genMsg = ctrl.generateMessage.value;
+              final prefMsg = ctrl.prefetchMessage.value;
+              final msg = genMsg.isNotEmpty ? genMsg : prefMsg;
               if (msg.isEmpty) return const SizedBox.shrink();
-              final isErr = ctrl.generateState.value == OptionsLoadState.error;
+              final isErr =
+                  ctrl.generateState.value == OptionsLoadState.error ||
+                  ctrl.prefetchState.value == OptionsLoadState.error;
               return Padding(
                 padding: const EdgeInsets.fromLTRB(
                   UIConstants.paddingXXL,

@@ -15,6 +15,7 @@ import 'package:stock_app/src/features/trades/open_trades_screen.dart';
 import 'package:stock_app/src/utils/colors/app_colors.dart';
 import 'package:stock_app/src/utils/constants/ui_constants.dart';
 import 'package:stock_app/src/utils/controllers/trading_mode_controller.dart';
+import 'package:stock_app/src/utils/controllers/ui_mode_controller.dart';
 import 'package:stock_app/src/utils/widget/drawer/reset_all_action.dart';
 
 // ---------------------------------------------------------------------------
@@ -26,12 +27,14 @@ class _NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String label;
+  final String section;
 
   const _NavItem({
     required this.index,
     required this.icon,
     required this.activeIcon,
     required this.label,
+    required this.section,
   });
 }
 
@@ -41,48 +44,56 @@ const List<_NavItem> _stocksNavItems = [
     icon: Icons.dashboard_outlined,
     activeIcon: Icons.dashboard_rounded,
     label: 'Dashboard',
+    section: 'Workflows',
   ),
   _NavItem(
     index: ScreenIndex.scans,
     icon: Icons.search_outlined,
     activeIcon: Icons.search_rounded,
     label: 'Scans',
+    section: 'Workflows',
   ),
   _NavItem(
     index: ScreenIndex.programs,
     icon: Icons.layers_outlined,
     activeIcon: Icons.layers_rounded,
     label: 'Programs',
+    section: 'Workflows',
   ),
   _NavItem(
     index: ScreenIndex.strategies,
     icon: Icons.category_outlined,
     activeIcon: Icons.category_rounded,
     label: 'Strategies',
+    section: 'Workflows',
   ),
   _NavItem(
     index: ScreenIndex.openTrades,
     icon: Icons.trending_up_outlined,
     activeIcon: Icons.trending_up,
     label: 'Open Trades',
+    section: 'Trades',
   ),
   _NavItem(
     index: ScreenIndex.closedTrades,
     icon: Icons.trending_down_outlined,
     activeIcon: Icons.trending_down,
     label: 'Closed Trades',
+    section: 'Trades',
   ),
   _NavItem(
     index: ScreenIndex.excel,
     icon: Icons.table_chart_outlined,
     activeIcon: Icons.table_chart,
     label: 'Excel Files',
+    section: 'System',
   ),
   _NavItem(
     index: ScreenIndex.recommendations,
     icon: Icons.analytics_outlined,
     activeIcon: Icons.analytics,
     label: 'Recommendations',
+    section: 'Trades',
   ),
 ];
 
@@ -92,12 +103,14 @@ const List<_NavItem> _optionsNavItems = [
     icon: Icons.auto_awesome_outlined,
     activeIcon: Icons.auto_awesome,
     label: 'Recommendations',
+    section: 'Workflows',
   ),
   _NavItem(
     index: ScreenIndex.optionsHistory,
     icon: Icons.history_rounded,
     activeIcon: Icons.history_rounded,
     label: 'History',
+    section: 'Trades',
   ),
 ];
 
@@ -106,12 +119,14 @@ const _NavItem _settingsNavItem = _NavItem(
   icon: Icons.settings_outlined,
   activeIcon: Icons.settings,
   label: 'Settings',
+  section: 'System',
 );
 
 // Breakpoint below which the sidebar becomes a Drawer
 const double _mobileBreakpoint = 600.0;
 // Sidebar width
 const double _sidebarWidth = 220.0;
+const double _sidebarWidthSimplified = 248.0;
 // Dark sidebar background
 const Color _sidebarBg = Color(0xFF1A1F36);
 const Color _sidebarActiveBg = Color(0xFF2D3458);
@@ -242,12 +257,14 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
   // ── Mobile: AppBar + Drawer ───────────────────────────────────────────────
 
   Widget _buildMobileScaffold(BuildContext context) {
+    final uiModeCtrl = Get.find<UiModeController>();
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.grey50,
       appBar: _MobileAppBar(controller: controller, scaffoldKey: _scaffoldKey),
       drawer: Drawer(
-        width: _sidebarWidth,
+        width:
+            uiModeCtrl.isSimplified ? _sidebarWidthSimplified : _sidebarWidth,
         backgroundColor: _sidebarBg,
         child: _AppSidebar(controller: controller, onNavTap: _onMobileNavTap),
       ),
@@ -328,25 +345,32 @@ class _AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: _sidebarWidth,
-      color: _sidebarBg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // App logo / name
-          _buildLogo(),
-          // Trading mode toggle
-          _buildModeToggle(),
-          const SizedBox(height: UIConstants.spacingL),
-          // Nav items
-          Expanded(child: _buildNavList(context)),
-          // Divider + bottom items
-          const Divider(color: Colors.white12, height: 1),
-          _buildBottomSection(context),
-        ],
-      ),
-    );
+    final uiModeCtrl = Get.find<UiModeController>();
+    return Obx(() {
+      return Container(
+        width:
+            uiModeCtrl.isSimplified ? _sidebarWidthSimplified : _sidebarWidth,
+        color: _sidebarBg,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // App logo / name
+            _buildLogo(),
+            uiModeCtrl.isSimplified
+                ? _buildContextHeader(controller.currentIndex.value)
+                : const SizedBox.shrink(),
+            // Trading mode toggle
+            _buildModeToggle(),
+            const SizedBox(height: UIConstants.spacingL),
+            // Nav items
+            Expanded(child: _buildNavList(context)),
+            // Divider + bottom items
+            const Divider(color: Colors.white12, height: 1),
+            _buildBottomSection(context),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildLogo() {
@@ -425,27 +449,71 @@ class _AppSidebar extends StatelessWidget {
 
   Widget _buildNavList(BuildContext context) {
     final modeCtrl = Get.find<TradingModeController>();
+    final uiModeCtrl = Get.find<UiModeController>();
     return Obx(() {
       final items = modeCtrl.isStocks ? _stocksNavItems : _optionsNavItems;
+      if (!uiModeCtrl.isSimplified) {
+        return ListView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: UIConstants.paddingS,
+            vertical: UIConstants.paddingS,
+          ),
+          children: [
+            ...items.map(
+              (item) => _NavItemTile(
+                item: item,
+                controller: controller,
+                onTap: () => onNavTap(item.index),
+              ),
+            ),
+          ],
+        );
+      }
+
+      final grouped = <String, List<_NavItem>>{};
+      for (final item in items) {
+        grouped.putIfAbsent(item.section, () => <_NavItem>[]).add(item);
+      }
+
       return ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: UIConstants.paddingS,
           vertical: UIConstants.paddingS,
         ),
         children: [
-          ...items.map(
-            (item) => _NavItemTile(
-              item: item,
-              controller: controller,
-              onTap: () => onNavTap(item.index),
+          for (final entry in grouped.entries) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                UIConstants.paddingL,
+                UIConstants.paddingM,
+                UIConstants.paddingL,
+                UIConstants.paddingS,
+              ),
+              child: Text(
+                entry.key,
+                style: const TextStyle(
+                  color: AppColors.white54,
+                  fontSize: UIConstants.fontM,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                ),
+              ),
             ),
-          ),
+            ...entry.value.map(
+              (item) => _NavItemTile(
+                item: item,
+                controller: controller,
+                onTap: () => onNavTap(item.index),
+              ),
+            ),
+          ],
         ],
       );
     });
   }
 
   Widget _buildBottomSection(BuildContext context) {
+    final uiModeCtrl = Get.find<UiModeController>();
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: UIConstants.paddingS,
@@ -461,6 +529,23 @@ class _AppSidebar extends StatelessWidget {
             onTap: () => ResetAllAction.show(context),
           ),
           const SizedBox(height: UIConstants.spacingS),
+          Obx(
+            () =>
+                uiModeCtrl.isSimplified
+                    ? _SidebarActionTile(
+                      icon: Icons.undo_rounded,
+                      label: 'Use Classic UI',
+                      color: Colors.white70,
+                      onTap: () => uiModeCtrl.setMode(UiMode.classic),
+                    )
+                    : const SizedBox.shrink(),
+          ),
+          Obx(
+            () =>
+                uiModeCtrl.isSimplified
+                    ? const SizedBox(height: UIConstants.spacingS)
+                    : const SizedBox.shrink(),
+          ),
           // Settings
           _NavItemTile(
             item: _settingsNavItem,
@@ -468,6 +553,57 @@ class _AppSidebar extends StatelessWidget {
             onTap: () => onNavTap(_settingsNavItem.index),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContextHeader(int currentIndex) {
+    _NavItem? currentItem;
+    for (final item in [
+      ..._stocksNavItems,
+      ..._optionsNavItems,
+      _settingsNavItem,
+    ]) {
+      if (item.index == currentIndex) {
+        currentItem = item;
+        break;
+      }
+    }
+    if (currentItem == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        UIConstants.paddingL,
+        UIConstants.paddingS,
+        UIConstants.paddingL,
+        UIConstants.paddingS,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(UIConstants.paddingM),
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              currentItem.section,
+              style: const TextStyle(
+                color: AppColors.white54,
+                fontSize: UIConstants.fontM,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
+            Text(
+              currentItem.label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: UIConstants.fontXL,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

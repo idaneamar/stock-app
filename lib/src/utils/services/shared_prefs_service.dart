@@ -8,7 +8,9 @@ class SharedPrefsService {
   static const String _useVixFilterKey = 'use_vix_filter';
   static const String _activeProgramIdKey = 'active_program_id';
   static const String _optionsServerUrlKey = 'options_server_url';
+  static const String _uiModeKey = 'ui_mode';
   static const String defaultOptionsServerUrl = 'http://localhost:8001/';
+  static const String defaultUiMode = 'simplified';
 
   // Options system configuration
   static const String _optionsIbkrPortKey = 'options_ibkr_port';
@@ -96,6 +98,21 @@ class SharedPrefsService {
   static Future<String> getOptionsServerUrl() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_optionsServerUrlKey) ?? defaultOptionsServerUrl;
+  }
+
+  /// Global UI mode (`classic` or `simplified`) used for shell/layout variants.
+  static Future<void> setUiMode(String mode) async {
+    final normalized = mode.trim().toLowerCase();
+    final value = normalized == 'classic' ? 'classic' : defaultUiMode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_uiModeKey, value);
+  }
+
+  static Future<String> getUiMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getString(_uiModeKey)?.trim().toLowerCase();
+    if (value == 'classic') return 'classic';
+    return defaultUiMode;
   }
 
   // ---------------------------------------------------------------------------

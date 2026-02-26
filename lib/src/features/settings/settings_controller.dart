@@ -32,6 +32,8 @@ class SettingsController extends GetxController {
   // Options local server URL
   final optionsServerUrlCtrl = TextEditingController();
   final RxBool optionsServerSaving = false.obs;
+  final RxString uiMode = SharedPrefsService.defaultUiMode.obs;
+  final RxBool uiModeSaving = false.obs;
 
   SettingsController({ApiService? apiService})
     : _apiService = apiService ?? ApiService();
@@ -51,6 +53,7 @@ class SettingsController extends GetxController {
       useVixFilter.value = await SharedPrefsService.getUseVixFilter();
       optionsServerUrlCtrl.text =
           await SharedPrefsService.getOptionsServerUrl();
+      uiMode.value = await SharedPrefsService.getUiMode();
       if (!isClosed) isInitialLoading.value = false;
     });
   }
@@ -200,6 +203,29 @@ class SettingsController extends GetxController {
       log('Error saving options server URL: $e');
     } finally {
       optionsServerSaving.value = false;
+    }
+  }
+
+  Future<void> setUiMode(BuildContext? context, String nextMode) async {
+    if (uiModeSaving.value) return;
+    uiModeSaving.value = true;
+    try {
+      await SharedPrefsService.setUiMode(nextMode);
+      uiMode.value = await SharedPrefsService.getUiMode();
+      if (context != null && context.mounted) {
+        UiFeedback.showSnackBar(
+          context,
+          message:
+              uiMode.value == 'classic'
+                  ? 'Classic UI enabled.'
+                  : 'Simplified UI enabled.',
+          type: UiMessageType.success,
+        );
+      }
+    } catch (e) {
+      log('Error saving UI mode: $e');
+    } finally {
+      uiModeSaving.value = false;
     }
   }
 

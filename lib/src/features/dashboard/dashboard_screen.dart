@@ -32,6 +32,8 @@ class DashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context, controller),
+                const SizedBox(height: UIConstants.spacingXL),
+                _buildPrimaryActionStrip(context),
                 const SizedBox(height: UIConstants.spacingXXXL),
                 _buildStatCards(controller),
                 const SizedBox(height: UIConstants.spacingXXXL),
@@ -208,26 +210,16 @@ class DashboardScreen extends StatelessWidget {
         child: const Text('View all'),
       ),
       child: Obx(() {
+        if (controller.isLoading.value && controller.recentScans.isEmpty) {
+          return _SectionStateMessage(
+            icon: Icons.sync_rounded,
+            message: 'Loading recent scans...',
+          );
+        }
         if (controller.recentScans.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.search_off_rounded,
-                    size: 48,
-                    color: AppColors.grey400,
-                  ),
-                  const SizedBox(height: UIConstants.spacingL),
-                  Text(
-                    'No scans yet',
-                    style: TextStyle(color: AppColors.grey500),
-                  ),
-                ],
-              ),
-            ),
+          return const _SectionStateMessage(
+            icon: Icons.search_off_rounded,
+            message: 'No scans yet',
           );
         }
         return Column(
@@ -246,6 +238,10 @@ class DashboardScreen extends StatelessWidget {
   ) {
     return _SectionCard(
       title: 'Quick Actions',
+      action: TextButton(
+        onPressed: () => _navigateTo(1),
+        child: const Text('Go to Scans'),
+      ),
       child: Column(
         children: [
           _ActionButton(
@@ -281,6 +277,30 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPrimaryActionStrip(BuildContext context) {
+    return Wrap(
+      spacing: UIConstants.spacingM,
+      runSpacing: UIConstants.spacingM,
+      children: [
+        FilledButton.icon(
+          onPressed: () => _openScanDialog(context),
+          icon: const Icon(Icons.search_rounded),
+          label: const Text('Run New Scan'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _navigateTo(2),
+          icon: const Icon(Icons.layers_rounded),
+          label: const Text('Programs'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _navigateTo(8),
+          icon: const Icon(Icons.settings_rounded),
+          label: const Text('Engine Settings'),
+        ),
+      ],
     );
   }
 
@@ -457,6 +477,30 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: UIConstants.spacingL),
           child,
         ],
+      ),
+    );
+  }
+}
+
+class _SectionStateMessage extends StatelessWidget {
+  final IconData icon;
+  final String message;
+
+  const _SectionStateMessage({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: AppColors.grey400),
+            const SizedBox(height: UIConstants.spacingL),
+            Text(message, style: TextStyle(color: AppColors.grey500)),
+          ],
+        ),
       ),
     );
   }
