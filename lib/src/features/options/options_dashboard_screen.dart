@@ -208,6 +208,31 @@ class _SystemHealthBar extends StatelessWidget {
       final prefetchDate = _formatDate(
         prefetch?['ended_at'] ?? prefetch?['ran_at'],
       );
+      final runningJobs =
+          (ms?['running_jobs'] as List?)
+              ?.whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList() ??
+          const <Map<String, dynamic>>[];
+      final prefetchRunning = runningJobs.any(_isPrefetchJobRunning);
+      final hasUsableData =
+          prefetchDate.isNotEmpty || ((s?.symbolCount ?? 0) > 0);
+      final thetaColor =
+          prefetchRunning
+              ? _accent
+              : prefetchOk
+              ? _paperGreen
+              : hasUsableData
+              ? _testAmber
+              : AppColors.error;
+      final thetaTooltip =
+          prefetchRunning
+              ? 'ThetaData sync is running'
+              : prefetchOk
+              ? 'ThetaData sync healthy'
+              : hasUsableData
+              ? 'Data is available, but latest sync reported warnings'
+              : 'No successful ThetaData sync yet';
       final isSyncing = ctrl.prefetchState.value == OptionsLoadState.loading;
 
       final isDryRun = cfg.dryRun;
@@ -240,29 +265,32 @@ class _SystemHealthBar extends StatelessWidget {
         child: Row(
           children: [
             // ThetaData status dot
-            GestureDetector(
-              onTap: () => showOptionsActivityPanel(context),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: prefetchOk ? _paperGreen : AppColors.error,
-                      shape: BoxShape.circle,
+            Tooltip(
+              message: thetaTooltip,
+              child: GestureDetector(
+                onTap: () => showOptionsActivityPanel(context),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: thetaColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'ThetaData',
-                    style: TextStyle(
-                      fontSize: UIConstants.fontS,
-                      color: prefetchOk ? _paperGreen : AppColors.error,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(width: 6),
+                    Text(
+                      'ThetaData',
+                      style: TextStyle(
+                        fontSize: UIConstants.fontS,
+                        color: thetaColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: UIConstants.spacingXL),
@@ -376,6 +404,26 @@ class _SystemHealthBar extends StatelessWidget {
     } catch (_) {
       return iso.toString();
     }
+  }
+
+  bool _isPrefetchJobRunning(Map<String, dynamic> entry) {
+    final status = (entry['status']?.toString() ?? '').toLowerCase();
+    final isRunningStatus =
+        status == 'running' ||
+        status == 'queued' ||
+        status == 'pending' ||
+        status == 'started';
+    if (!isRunningStatus) return false;
+
+    final text = [
+      entry['script'],
+      entry['name'],
+      entry['job_name'],
+      entry['task'],
+      entry['title'],
+      entry['command'],
+    ].where((v) => v != null).map((v) => v.toString().toLowerCase()).join(' ');
+    return text.contains('prefetch') || text.contains('theta');
   }
 
   /// Returns a short human-readable date like "Feb 25" or "Feb 25, 2024".

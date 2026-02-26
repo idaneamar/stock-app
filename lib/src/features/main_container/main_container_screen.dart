@@ -513,7 +513,6 @@ class _AppSidebar extends StatelessWidget {
   }
 
   Widget _buildBottomSection(BuildContext context) {
-    final uiModeCtrl = Get.find<UiModeController>();
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: UIConstants.paddingS,
@@ -529,23 +528,6 @@ class _AppSidebar extends StatelessWidget {
             onTap: () => ResetAllAction.show(context),
           ),
           const SizedBox(height: UIConstants.spacingS),
-          Obx(
-            () =>
-                uiModeCtrl.isSimplified
-                    ? _SidebarActionTile(
-                      icon: Icons.undo_rounded,
-                      label: 'Use Classic UI',
-                      color: Colors.white70,
-                      onTap: () => uiModeCtrl.setMode(UiMode.classic),
-                    )
-                    : const SizedBox.shrink(),
-          ),
-          Obx(
-            () =>
-                uiModeCtrl.isSimplified
-                    ? const SizedBox(height: UIConstants.spacingS)
-                    : const SizedBox.shrink(),
-          ),
           // Settings
           _NavItemTile(
             item: _settingsNavItem,

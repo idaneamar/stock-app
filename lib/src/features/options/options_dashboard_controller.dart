@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:stock_app/src/features/options/options_ibkr_log_sheet.dart';
 import 'package:stock_app/src/models/options_recommendation.dart';
@@ -62,6 +64,7 @@ class OptionsDashboardController extends GetxController {
 
   /// Active configuration (loaded from SharedPrefs on init and after config changes).
   final Rx<OptionsConfig> config = const OptionsConfig().obs;
+  int _prefetchMonitorToken = 0;
 
   @override
   void onInit() {
@@ -265,6 +268,12 @@ class OptionsDashboardController extends GetxController {
 
   Future<void> triggerPrefetch() async {
     if (prefetchState.value == OptionsLoadState.loading) return;
+    final monitorToken = ++_prefetchMonitorToken;
+    final previousPrefetch = morningStatus.value?['last_prefetch'];
+    final previousEndedAt = _parseIso(
+      previousPrefetch is Map ? previousPrefetch['ended_at'] : null,
+    );
+
     prefetchState.value = OptionsLoadState.loading;
     prefetchMessage.value = 'ThetaData prefetch started…';
 
@@ -276,11 +285,113 @@ class OptionsDashboardController extends GetxController {
         years: cfg.prefetchYears.isNotEmpty ? cfg.prefetchYears : null,
       );
       prefetchMessage.value = 'Prefetch running in background — check Activity';
-      prefetchState.value = OptionsLoadState.success;
+      await fetchMorningStatus();
+      await fetchStatus();
+      unawaited(
+        _monitorPrefetchJob(
+          monitorToken: monitorToken,
+          previousEndedAt: previousEndedAt,
+        ),
+      );
     } catch (e) {
       prefetchMessage.value = e.toString();
       prefetchState.value =
           _isOffline(e) ? OptionsLoadState.offline : OptionsLoadState.error;
+    }
+  }
+
+  Future<void> _monitorPrefetchJob({
+    required int monitorToken,
+    required DateTime? previousEndedAt,
+  }) async {
+    bool sawRunning = false;
+    for (int i = 0; i < 90; i++) {
+      if (monitorToken != _prefetchMonitorToken) return;
+      await Future.delayed(const Duration(seconds: 3));
+      if (monitorToken != _prefetchMonitorToken) return;
+
+      await fetchMorningStatus();
+      await fetchStatus();
+
+      final ms = morningStatus.value;
+      final running =
+          (ms?['running_jobs'] as List?)
+              ?.whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList() ??
+          const <Map<String, dynamic>>[];
+
+      final isRunning = running.any(_isPrefetchJobRunning);
+      if (isRunning) {
+        sawRunning = true;
+        prefetchState.value = OptionsLoadState.loading;
+        prefetchMessage.value =
+            'Prefetch running in background — check Activity';
+        continue;
+      }
+
+      final latestPrefetch = ms?['last_prefetch'];
+      final latestMap =
+          latestPrefetch is Map<String, dynamic>
+              ? latestPrefetch
+              : latestPrefetch is Map
+              ? Map<String, dynamic>.from(latestPrefetch)
+              : null;
+      final endedAt = _parseIso(latestMap?['ended_at'] ?? latestMap?['ran_at']);
+      final isNewRun =
+          endedAt != null &&
+          (previousEndedAt == null || endedAt.isAfter(previousEndedAt));
+
+      if (isNewRun || sawRunning) {
+        final ok = latestMap?['ok'] == true;
+        prefetchState.value =
+            ok ? OptionsLoadState.success : OptionsLoadState.error;
+        prefetchMessage.value =
+            ok
+                ? 'Prefetch finished successfully.'
+                : 'Prefetch finished with warnings. Open Activity for details.';
+        await Future.delayed(const Duration(seconds: 6));
+        if (monitorToken == _prefetchMonitorToken) {
+          prefetchMessage.value = '';
+          prefetchState.value = OptionsLoadState.idle;
+        }
+        return;
+      }
+    }
+
+    if (monitorToken == _prefetchMonitorToken) {
+      prefetchState.value = OptionsLoadState.success;
+      prefetchMessage.value =
+          'Prefetch still running — open Activity for live logs.';
+    }
+  }
+
+  bool _isPrefetchJobRunning(Map<String, dynamic> entry) {
+    final status = (entry['status']?.toString() ?? '').toLowerCase();
+    final isRunningStatus =
+        status == 'running' ||
+        status == 'queued' ||
+        status == 'pending' ||
+        status == 'started';
+    if (!isRunningStatus) return false;
+
+    final text = [
+      entry['script'],
+      entry['name'],
+      entry['job_name'],
+      entry['task'],
+      entry['title'],
+      entry['command'],
+    ].where((v) => v != null).map((v) => v.toString().toLowerCase()).join(' ');
+    return text.contains('prefetch') || text.contains('theta');
+  }
+
+  DateTime? _parseIso(dynamic iso) {
+    if (iso == null) return null;
+    try {
+      return DateTime.parse(iso.toString()).toLocal();
+    } catch (_) {
+      return null;
     }
   }
 
